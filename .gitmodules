@@ -1,0 +1,3 @@
+[submodule "deps/FastNoiseLite"]
+	path = deps/FastNoiseLite
+	url = https://github.com/Auburn/FastNoiseLite
