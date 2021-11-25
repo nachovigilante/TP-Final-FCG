@@ -3,7 +3,7 @@ name: Web demo
 on: [push]
 
 env:
-  EM_VERSION: 3.0.0
+  EM_VERSION: 2.0.34
   EM_CACHE_FOLDER: 'emsdk-cache'
 
 jobs:
