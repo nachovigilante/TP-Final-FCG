@@ -1,0 +1,35 @@
+name: Web demo
+
+on: [push]
+
+env:
+  EM_VERSION: 3.0.0
+  EM_CACHE_FOLDER: 'emsdk-cache'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup cache
+        id: cache-system-libraries
+        uses: actions/cache@v2
+        with:
+          path: ${{env.EM_CACHE_FOLDER}}
+          key: emscripten-${{env.EM_VERSION}}-${{ runner.os }}
+      - name: Setup emscripten
+        uses: mymindstorm/setup-emsdk@v7
+        with:
+          version: ${{env.EM_VERSION}}
+          actions-cache-folder: ${{env.EM_CACHE_FOLDER}}
+      - name: Build
+        run: make build
+
+      - uses: jsmrcaga/action-netlify-deploy@v1.1.0
+        with:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_SECRET }}
+          NETLIFY_DEPLOY_TO_PROD: true
+          NETLIFY_SITE_ID: "3439c388-4dda-404f-8776-0c2714dfbc9c"
+          build_directory: "web"
+
