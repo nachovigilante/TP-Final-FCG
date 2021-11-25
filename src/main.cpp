@@ -7,3 +7,7 @@ extern "C" {
         return 2 * param1;
     }
 }
+
+int main() {
+    return 0;
+}

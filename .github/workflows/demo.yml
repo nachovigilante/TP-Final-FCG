@@ -24,7 +24,7 @@ jobs:
           version: ${{env.EM_VERSION}}
           actions-cache-folder: ${{env.EM_CACHE_FOLDER}}
       - name: Build
-        run: make build
+        run: make
 
       - uses: jsmrcaga/action-netlify-deploy@v1.1.0
         with:

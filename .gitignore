@@ -1,3 +1,4 @@
-build/
+build-web/
+build-vs/
 Native.js
 Native.wasm
