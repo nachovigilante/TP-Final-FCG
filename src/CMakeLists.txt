@@ -3,6 +3,8 @@ project(FCG)
 
 set(CMAKE_CXX_STANDARD 14)
 
+include_directories(../deps/FastNoiseLite/Cpp)
+
 add_executable(Native main.cpp)
 
-target_link_libraries(Native "-s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS=['_main'] -o ../web/Native.js")
+target_link_libraries(Native "-s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS=['_generate'] -o ../web/Native.js")

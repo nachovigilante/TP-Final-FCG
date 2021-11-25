@@ -1,6 +1,9 @@
 #include <iostream>
 
-int main() {
-    printf("asdf");
-    return 0;
+#include "FastNoiseLite.h"
+
+extern "C" {
+    int generate(float* data, float param1) {
+        return 2 * param1;
+    }
 }
