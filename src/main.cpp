@@ -80,7 +80,7 @@ extern "C" {
             trianglesArray[i * 9 + 8] = triangles[i].p[2].z;
         }
 
-        return 1;
+        return numTriangles * 3;
     }
 }
 
