@@ -1,4 +1,5 @@
 const canvas = document.getElementById("canvas");
+const gl = canvas.getContext("webgl", { antialias: false, depth: true });
 const gui = new dat.GUI({ name: "My GUI" });
 
 const terrain_params = {
@@ -10,65 +11,83 @@ const terrain_params = {
 gui.add(terrain_params, "param1", 0, 100);
 gui.add(terrain_params, "param2", 0, 100);
 
+if (!gl) {
+    alert("Imposible inicializar WebGL. Tu navegador quizás no lo soporte.");
+    crash;
+}
+
 Module.onRuntimeInitialized = () => {
     gui.add(terrain_params, "generate");
     generate();
-}
+};
 
-const renderer = new Renderer(canvas);
+const renderer = new Renderer(canvas, gl);
+const meshes = [];
+let dirty = true;
 
 function generate() {
-    const boxdrawer = new BoxDrawer(renderer.gl);
-    console.log(Module._generate(terrain_params.param1, terrain_params.param2));
-    console.log(renderer);
+    let address = Module._malloc(100000 * 4);
+    let numVerts = Module._generate(address, terrain_params.param1);
+    let buffer = Module.HEAPF32.slice(address / 4, address / 4 + numVerts)
+    console.log(buffer);
+    meshes.push(new Mesh(buffer, renderer.gl));
+    //Module._free(buffer);
 
-    const pos = [
-        -1,-1,-1, // triángulo 1 : comienza
-        -1,-1, 1,
-        -1, 1, 1, // triángulo 1 : termina
-        1, 1,-1, // triángulo 2 : comienza
-        -1,-1,-1,
-        -1, 1,-1, // triángulo 2 : termina
-        1,-1, 1,
-        -1,-1,-1,
-        1,-1,-1,
-        1, 1,-1,
-        1,-1,-1,
-        -1,-1,-1,
-        -1,-1,-1,
-        -1, 1, 1,
-        -1, 1,-1,
-        1,-1, 1,
-        -1,-1, 1,
-        -1,-1,-1,
-        -1, 1, 1,
-        -1,-1, 1,
-        1,-1, 1,
-        1, 1, 1,
-        1,-1,-1,
-        1, 1,-1,
-        1,-1,-1,
-        1, 1, 1,
-        1,-1, 1,
-        1, 1, 1,
-        1, 1,-1,
-        -1, 1,-1,
-        1, 1, 1,
-        -1, 1,-1,
-        -1, 1, 1,
-        1, 1, 1,
-        -1, 1, 1,
-        1,-1, 1
-    ];
-    const mesh = new Mesh(pos, renderer.gl);
 
-    var rotX=0, rotY=0, transZ=3, autorot=0;
-	const perspectiveMatrix = ProjectionMatrix(canvas, 5);
-	const mv  = GetModelViewMatrix(0, 0, 5, 0, 0);
-	const mvp = MatrixMult(perspectiveMatrix, mv);
-
-    renderer.draw(mvp, [mesh]);
-    boxdrawer.draw(mvp);
+    dirty = true;
 }
 
-window.onresize = () => renderer.resize();
+let rotX = 0, rotY = 0, transZ = 3;
+
+window.onresize = () => {
+    renderer.resize();
+    dirty = true;
+};
+window.onload = () => {
+    // Evento de zoom (ruedita)
+    canvas.zoom = function (s) {
+        transZ *= s / canvas.height + 1;
+        dirty = true;
+    };
+    canvas.onwheel = (event) => canvas.zoom(0.3 * event.deltaY);
+
+    // Evento de click
+    canvas.onmousedown = function (event) {
+        var cx = event.clientX;
+        var cy = event.clientY;
+        if (event.ctrlKey) {
+            canvas.onmousemove = function (event) {
+                canvas.zoom(5 * (event.clientY - cy));
+                cy = event.clientY;
+            };
+        } else {
+            // Si se mueve el mouse, actualizo las matrices de rotación
+            canvas.onmousemove = function (event) {
+                rotY += ((cx - event.clientX) / canvas.width) * 5;
+                rotX += ((cy - event.clientY) / canvas.height) * 5;
+                cx = event.clientX;
+                cy = event.clientY;
+                dirty = true;
+            };
+        }
+    };
+
+    canvas.onmouseup = canvas.onmouseleave = () => canvas.onmousemove = null;
+    canvas.oncontextmenu = () => false;
+
+    function frame() {
+        // con esto evitamos renderizar cosas innecesarias
+        if (dirty) {
+            const perspectiveMatrix = ProjectionMatrix(canvas, -10);
+            const mv = GetModelViewMatrix(0, 0, transZ, rotX, rotY);
+            const mvp = MatrixMult(perspectiveMatrix, mv);
+            
+            renderer.draw(mvp, meshes);
+
+            dirty = false;
+        }
+        requestAnimationFrame(frame);
+    }
+
+    frame();
+};

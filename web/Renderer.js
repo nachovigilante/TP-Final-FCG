@@ -1,33 +1,27 @@
 class Renderer {
-    constructor(canvas) {
+    constructor(canvas, gl) {
         this.canvas = canvas;
+        this.gl = gl;
 
-        const gl = (this.gl = canvas.getContext("webgl", { antialias: false, depth: true }));
-        if (!gl) {
-            alert("Imposible inicializar WebGL. Tu navegador quizás no lo soporte.");
-            return;
-        }
+        this.boxdrawer = new BoxDrawer(gl);
+        this.init();
+    }
 
-        canvas.oncontextmenu = () => false;
-
+    init() {
         gl.clearColor(0, 0, 0, 0);
         gl.enable(gl.DEPTH_TEST);
-
         this.resize();
-        
-		// 1. Compilamos el programa de shaders
+
         this.prog = InitShaderProgram(shaderVS, shaderFS, gl);
-        
-		// 2. Obtenemos los IDs de las variables uniformes en los shaders
-		this.mvp = gl.getUniformLocation(this.prog, 'mvp');
-        
-		// 3. Obtenemos los IDs de los atributos de los vértices en los shaders
-		this.pos = gl.getAttribLocation(this.prog, 'pos');
+
+        // uniforms
+        this.mvp = gl.getUniformLocation(this.prog, "mvp");
+
+        // attributes
+        this.pos = gl.getAttribLocation(this.prog, "pos");
     }
 
     resize() {
-        const { canvas, gl } = this;
-
         const pixelRatio = window.devicePixelRatio || 1;
         canvas.width = pixelRatio * canvas.clientWidth;
         canvas.height = pixelRatio * canvas.clientHeight;
@@ -40,13 +34,15 @@ class Renderer {
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-		gl.useProgram(this.prog);
-		gl.uniformMatrix4fv(this.mvp, false, matrixMVP);
+        gl.useProgram(this.prog);
+        gl.uniformMatrix4fv(this.mvp, false, matrixMVP);
 
-        for(const mesh of meshes) {
+        for (const mesh of meshes) {
             mesh.prepare(this.prog);
             mesh.draw();
         }
+
+        this.boxdrawer.draw(matrixMVP);
     }
 }
 
@@ -67,7 +63,7 @@ void main()
 {
     texCoord = uv;
     normCoord = normal;
-    vertCoord = mvp * vec4(pos, 1.0);
+    vertCoord = vec4(pos, 1.0);
     gl_Position = mvp * vec4(pos,1.0);
 }
 `;
@@ -82,7 +78,6 @@ varying vec4 vertCoord;
 void main()
 {
     vec3 C = vec3(1.0, 0.0, 1.0);
-    gl_FragColor = vec4(C, 1.0);
+    gl_FragColor = vec4(vertCoord.xyz, 1.0);
 }
-
 `;
