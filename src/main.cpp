@@ -5,229 +5,170 @@
 
 using namespace std;
 
-struct Vertex{
-    float x;
-    float y;
-    float z;
+struct Vertex {
+	float x;
+	float y;
+	float z;
 };
 
-Vertex operator-(Vertex a, Vertex b) {
-    Vertex c;
-    c.x = a.x - b.x;
-    c.y = a.y - b.y;
-    c.z = a.z - b.z;
-    return c;
+Vertex operator-(const Vertex& a, const Vertex& b) {
+	Vertex c;
+	c.x = a.x - b.x;
+	c.y = a.y - b.y;
+	c.z = a.z - b.z;
+	return c;
 }
 
-struct Triangle{
-   Vertex p[3];
-};
-
-struct Gridcell{
-   Vertex p[8];
-   float val[8];
-};
-
-Vertex crossProduct(Vertex A, Vertex B) {
-    Vertex C;
-    C.x = A.y * B.z - A.z * B.y;
-    C.y = A.z * B.x - A.x * B.z;
-    C.z = A.x * B.y - A.y * B.x;
-    return C;
+Vertex crossProduct(const Vertex& A, const Vertex& B) {
+	Vertex C;
+	C.x = A.y * B.z - A.z * B.y;
+	C.y = A.z * B.x - A.x * B.z;
+	C.z = A.x * B.y - A.y * B.x;
+	return C;
 }
 
-Vertex normalize(Vertex V) {
-    float length = sqrt(V.x * V.x + V.y * V.y + V.z * V.z);
-    Vertex N;
-    N.x = V.x / length;
-    N.y = V.y / length;
-    N.z = V.z / length;
-    return N;
+Vertex normalize(const Vertex& V) {
+	float length = sqrt(V.x * V.x + V.y * V.y + V.z * V.z);
+	Vertex N;
+	N.x = V.x / length;
+	N.y = V.y / length;
+	N.z = V.z / length;
+	return N;
 }
 
-Vertex vertexInterp(float isolevel, Vertex p1, Vertex p2, float v1, float v2){
-    float mu;
-    Vertex p;
+inline Vertex vertexInterp(const float isolevel, const Vertex& p1, const  Vertex& p2, const float v1, const float v2) {
+	if (abs(isolevel - v1) < 0.00001 || abs(v1 - v2) < 0.00001)
+		return(p1);
+	if (abs(isolevel - v2) < 0.00001)
+		return(p2);
 
-    if (abs(isolevel-v1) < 0.00001 || abs(v1-v2) < 0.00001)
-        return(p1);
-    if (abs(isolevel-v2) < 0.00001)
-        return(p2);
-    
-    mu = (isolevel - v1) / (v2 - v1);
-    p.x = p1.x + mu * (p2.x - p1.x);
-    p.y = p1.y + mu * (p2.y - p1.y);
-    p.z = p1.z + mu * (p2.z - p1.z);
-
-    return(p);
-}
-
-void marchingCubes(Gridcell cell, float isolevel, Triangle* triangles, Vertex* normals, int* numTriangles) {
-    int cubeIndex = 0;
-    
-    // Busco qué vertices están dentro del cubo
-    // y determino el índice en edgeTable
-    if (cell.val[0] < isolevel) cubeIndex |= 1;
-    if (cell.val[1] < isolevel) cubeIndex |= 2;
-    if (cell.val[2] < isolevel) cubeIndex |= 4;
-    if (cell.val[3] < isolevel) cubeIndex |= 8;
-    if (cell.val[4] < isolevel) cubeIndex |= 16;
-    if (cell.val[5] < isolevel) cubeIndex |= 32;
-    if (cell.val[6] < isolevel) cubeIndex |= 64;
-    if (cell.val[7] < isolevel) cubeIndex |= 128;
-
-    // Si no hay ningún vertice dentro del cubo, no hago nada
-    if (edgeTable[cubeIndex] == 0) return;
-
-    // Si hay alguno, busco los triangulos
-    int edge = edgeTable[cubeIndex];
-    Vertex vertexList[12];
-
-    // Escribo los vertices en el arreglo
-    if (edge & 1)
-        vertexList[0] = vertexInterp(isolevel, cell.p[0], cell.p[1], cell.val[0], cell.val[1]);
-    if (edge & 2)
-        vertexList[1] = vertexInterp(isolevel, cell.p[1], cell.p[2], cell.val[1], cell.val[2]);
-    if (edge & 4)
-        vertexList[2] = vertexInterp(isolevel, cell.p[2], cell.p[3], cell.val[2], cell.val[3]);
-    if (edge & 8)
-        vertexList[3] = vertexInterp(isolevel, cell.p[3], cell.p[0], cell.val[3], cell.val[0]);
-    if (edge & 16)
-        vertexList[4] = vertexInterp(isolevel, cell.p[4], cell.p[5], cell.val[4], cell.val[5]);
-    if (edge & 32)
-        vertexList[5] = vertexInterp(isolevel, cell.p[5], cell.p[6], cell.val[5], cell.val[6]);
-    if (edge & 64)
-        vertexList[6] = vertexInterp(isolevel, cell.p[6], cell.p[7], cell.val[6], cell.val[7]);
-    if (edge & 128)
-        vertexList[7] = vertexInterp(isolevel, cell.p[7], cell.p[4], cell.val[7], cell.val[4]);
-    if (edge & 256)
-        vertexList[8] = vertexInterp(isolevel, cell.p[0], cell.p[4], cell.val[0], cell.val[4]);
-    if (edge & 512)
-        vertexList[9] = vertexInterp(isolevel, cell.p[1], cell.p[5], cell.val[1], cell.val[5]);
-    if (edge & 1024)
-        vertexList[10] = vertexInterp(isolevel, cell.p[2], cell.p[6], cell.val[2], cell.val[6]);
-    if (edge & 2048)
-        vertexList[11] = vertexInterp(isolevel, cell.p[3], cell.p[7], cell.val[3], cell.val[7]);
-
-    // Genero los triangulos
-    for (int i = 0; triTable[cubeIndex][i] != -1; i += 3) {
-        triangles[*numTriangles].p[0] = vertexList[triTable[cubeIndex][i]];
-        triangles[*numTriangles].p[1] = vertexList[triTable[cubeIndex][i+1]];
-        triangles[*numTriangles].p[2] = vertexList[triTable[cubeIndex][i+2]];
-        
-        Vertex normal = crossProduct(triangles[*numTriangles].p[1] - triangles[*numTriangles].p[0], triangles[*numTriangles].p[2] - triangles[*numTriangles].p[0]);
-        normalize(normal);
-        normals[*numTriangles] = normal;
-        (*numTriangles)++;
-    }
+	float mu = (isolevel - v1) / (v2 - v1);
+	return {
+		p1.x + mu * (p2.x - p1.x),
+		p1.y + mu * (p2.y - p1.y),
+		p1.z + mu * (p2.z - p1.z)
+	};
 }
 
 extern "C" {
-    int generate_mesh(float* trianglesArray, float* normalsArray, float isolevel) {
-        const int min = 0, max = 10;
+	int generate_mesh(Vertex* vertArray, Vertex* normArray, const int SIZE, const float isolevel) {
+		FastNoiseLite noise;
+		noise.SetNoiseType(FastNoiseLite::NoiseType::NoiseType_Perlin);
 
-        FastNoiseLite noise;
-        noise.SetNoiseType(FastNoiseLite::NoiseType::NoiseType_OpenSimplex2);
+		const int CELLS = SIZE * SIZE * SIZE;
+		float* points = (float*)malloc(CELLS * sizeof(float));
 
-        vector<vector<vector<float>>> pointCloud;
-        // pointCloud.resize(max - min);
-        // for (int x = 0; x < max - min; x++) {
-        //     pointCloud[x].resize(max - min);
-        //     for (int y = 0; y < max - min; y++) {
-        //         pointCloud[x][y].resize(max - min);
-        //         for (int z = 0; z < max - min; z++) {
-        //             pointCloud[x][y][z] = (rand() % 1000) / 1000.0f;
-        //         }
-        //     }
-        // }
+		// 1. Generar la nube de puntos
+		for (int x = 0; x < SIZE; x++) {
+			for (int y = 0; y < SIZE; y++) {
+				for (int z = 0; z < SIZE; z++) {
+					float val = (noise.GetNoise((float)x, (float)y, (float)z) + 1.0f) / 2.0f;
 
-        for (int x = 0; x < max - min; x++) {
-            pointCloud.push_back(vector<vector<float>>());
-            for (int y = 0; y < max - min; y++) {
-                pointCloud[x].push_back(vector<float>());
-                for (int z = 0; z < max - min; z++) {
-                    pointCloud[x][y].push_back((noise.GetNoise((float)x * 100, (float)y * 100, (float)z * 100) + 1.0f) / 2.0f);
-                }
-            }
-        }
+					points[x * SIZE * SIZE + y * SIZE + z] = val;
+				}
+			}
+		}
 
-        int numTriangles = 0;
-        Triangle* triangles = new Triangle[(max - min) * (max - min) * (max - min) * 5];
-        Vertex* normals = new Vertex[(max - min) * (max - min) * (max - min) * 5];
+		int numVertex = 0;
+		float val[8];
+		Vertex p[8];
+		Vertex vertexList[12];
 
-        for (int x = 0; x < max - min - 1; x++) {
-            for (int y = 0; y < max - min - 1; y++) {
-                for (int z = 0; z < max - min - 1; z++) {
-                    Gridcell cell;
-                    cell.p[0].x = x;
-                    cell.p[0].y = y;
-                    cell.p[0].z = z;
-                    cell.p[1].x = x + 1;
-                    cell.p[1].y = y;
-                    cell.p[1].z = z;
-                    cell.p[2].x = x + 1;
-                    cell.p[2].y = y;
-                    cell.p[2].z = z + 1;
-                    cell.p[3].x = x;
-                    cell.p[3].y = y;
-                    cell.p[3].z = z + 1;
-                    cell.p[4].x = x;
-                    cell.p[4].y = y + 1;
-                    cell.p[4].z = z;
-                    cell.p[5].x = x + 1;
-                    cell.p[5].y = y + 1;
-                    cell.p[5].z = z;
-                    cell.p[6].x = x + 1;
-                    cell.p[6].y = y + 1;
-                    cell.p[6].z = z + 1;
-                    cell.p[7].x = x;
-                    cell.p[7].y = y + 1;
-                    cell.p[7].z = z + 1;
-                    cell.val[0] = pointCloud[x][y][z];
-                    cell.val[1] = pointCloud[x + 1][y][z];
-                    cell.val[2] = pointCloud[x + 1][y][z + 1];
-                    cell.val[3] = pointCloud[x][y][z + 1];
-                    cell.val[4] = pointCloud[x][y + 1][z];
-                    cell.val[5] = pointCloud[x + 1][y + 1][z];
-                    cell.val[6] = pointCloud[x + 1][y + 1][z + 1];
-                    cell.val[7] = pointCloud[x][y + 1][z + 1];
-                    marchingCubes(cell, isolevel, triangles, normals, &numTriangles);
-                }
-            }
-        }
+		// 2. Marching Cubes
+		for (int x = 0; x < SIZE - 1; x++) {
+			for (int y = 0; y < SIZE - 1; y++) {
+				for (int z = 0; z < SIZE - 1; z++) {
+					float xx = x;
+					float yy = y;
+					float zz = z;
+					p[0] = { xx, yy, zz };
+					p[1] = { xx + 1, yy, zz };
+					p[2] = { xx + 1,yy,zz + 1 };
+					p[3] = { xx, yy, zz + 1 };
+					p[4] = { xx, yy + 1, zz };
+					p[5] = { xx + 1, yy + 1, zz };
+					p[6] = { xx + 1, yy + 1, zz + 1 };
+					p[7] = { xx , yy + 1, zz + 1 };
 
-        // Escribo los triangulos en el arreglo
-        for (int i = 0; i < numTriangles; i++) {
-            trianglesArray[i * 9 + 0] = triangles[i].p[0].x;
-            trianglesArray[i * 9 + 1] = triangles[i].p[0].y;
-            trianglesArray[i * 9 + 2] = triangles[i].p[0].z;
-            trianglesArray[i * 9 + 3] = triangles[i].p[1].x;
-            trianglesArray[i * 9 + 4] = triangles[i].p[1].y;
-            trianglesArray[i * 9 + 5] = triangles[i].p[1].z;
-            trianglesArray[i * 9 + 6] = triangles[i].p[2].x;
-            trianglesArray[i * 9 + 7] = triangles[i].p[2].y;
-            trianglesArray[i * 9 + 8] = triangles[i].p[2].z;
+					int cubeIndex = 0;
+					val[0] = points[(x + 0) * SIZE * SIZE + (y + 0) * SIZE + (z + 0)];
+					val[1] = points[(x + 1) * SIZE * SIZE + (y + 0) * SIZE + (z + 0)];
+					val[2] = points[(x + 1) * SIZE * SIZE + (y + 0) * SIZE + (z + 1)];
+					val[3] = points[(x + 0) * SIZE * SIZE + (y + 0) * SIZE + (z + 1)];
+					val[4] = points[(x + 0) * SIZE * SIZE + (y + 1) * SIZE + (z + 0)];
+					val[5] = points[(x + 1) * SIZE * SIZE + (y + 1) * SIZE + (z + 0)];
+					val[6] = points[(x + 1) * SIZE * SIZE + (y + 1) * SIZE + (z + 1)];
+					val[7] = points[(x + 0) * SIZE * SIZE + (y + 1) * SIZE + (z + 1)];
 
-            normalsArray[i * 9 + 0] = normals[i].x;
-            normalsArray[i * 9 + 1] = normals[i].y;
-            normalsArray[i * 9 + 2] = normals[i].z;
-            normalsArray[i * 9 + 3] = normals[i].x;
-            normalsArray[i * 9 + 4] = normals[i].y;
-            normalsArray[i * 9 + 5] = normals[i].z;
-            normalsArray[i * 9 + 6] = normals[i].x;
-            normalsArray[i * 9 + 7] = normals[i].y;
-            normalsArray[i * 9 + 8] = normals[i].z;
-        }
+					// Busco qué vertices están dentro del cubo
+					// y determino el índice en edgeTable
+					if (val[0] < isolevel) cubeIndex |= 1;
+					if (val[1] < isolevel) cubeIndex |= 2;
+					if (val[2] < isolevel) cubeIndex |= 4;
+					if (val[3] < isolevel) cubeIndex |= 8;
+					if (val[4] < isolevel) cubeIndex |= 16;
+					if (val[5] < isolevel) cubeIndex |= 32;
+					if (val[6] < isolevel) cubeIndex |= 64;
+					if (val[7] < isolevel) cubeIndex |= 128;
 
-        return numTriangles * 3;
-    }
+					// Si no hay ningún vertice dentro del cubo, no hago nada
+					if (edgeTable[cubeIndex] == 0) continue;
+
+					// Si hay alguno, busco los triangulos
+					int edge = edgeTable[cubeIndex];
+
+					if (edge & 1)
+						vertexList[0] = vertexInterp(isolevel, p[0], p[1], val[0], val[1]);
+					if (edge & 2)
+						vertexList[1] = vertexInterp(isolevel, p[1], p[2], val[1], val[2]);
+					if (edge & 4)
+						vertexList[2] = vertexInterp(isolevel, p[2], p[3], val[2], val[3]);
+					if (edge & 8)
+						vertexList[3] = vertexInterp(isolevel, p[3], p[0], val[3], val[0]);
+					if (edge & 16)
+						vertexList[4] = vertexInterp(isolevel, p[4], p[5], val[4], val[5]);
+					if (edge & 32)
+						vertexList[5] = vertexInterp(isolevel, p[5], p[6], val[5], val[6]);
+					if (edge & 64)
+						vertexList[6] = vertexInterp(isolevel, p[6], p[7], val[6], val[7]);
+					if (edge & 128)
+						vertexList[7] = vertexInterp(isolevel, p[7], p[4], val[7], val[4]);
+					if (edge & 256)
+						vertexList[8] = vertexInterp(isolevel, p[0], p[4], val[0], val[4]);
+					if (edge & 512)
+						vertexList[9] = vertexInterp(isolevel, p[1], p[5], val[1], val[5]);
+					if (edge & 1024)
+						vertexList[10] = vertexInterp(isolevel, p[2], p[6], val[2], val[6]);
+					if (edge & 2048)
+						vertexList[11] = vertexInterp(isolevel, p[3], p[7], val[3], val[7]);
+
+					// Genero los triangulos
+					for (int i = 0; triTable[cubeIndex][i] != -1; i += 3) {
+						const Vertex& a = vertexList[triTable[cubeIndex][i]];
+						const Vertex& b = vertexList[triTable[cubeIndex][i + 1]];
+						const Vertex& c = vertexList[triTable[cubeIndex][i + 2]];
+						const Vertex normal = normalize(crossProduct(b - a, c - a));
+
+						normArray[numVertex] = normal;
+						vertArray[numVertex++] = a;
+						normArray[numVertex] = normal;
+						vertArray[numVertex++] = b;
+						normArray[numVertex] = normal;
+						vertArray[numVertex++] = c;
+					}
+				}
+			}
+		}
+
+		return numVertex;
+	}
 }
 
 int main() {
-    float* trianglesArray = (float*)malloc(100 * 100 * 100 * 1000);
-    float* normalsArray = (float*)malloc(100 * 100 * 100 * 1000);
-    int numTriangles = generate_mesh(trianglesArray, normalsArray, 0.0);
-    cout << "Numero de triangulos: " << numTriangles << endl;
+	Vertex* trianglesArray = (Vertex*)malloc(100 * 100 * 100 * 1000);
+	Vertex* normalsArray = (Vertex*)malloc(100 * 100 * 100 * 1000);
+	int numTriangles = generate_mesh(trianglesArray, normalsArray, 100, 0.5);
+	cout << "Numero de triangulos: " << numTriangles << endl;
 
-    return 0;
+	return 0;
 }

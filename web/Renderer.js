@@ -36,7 +36,7 @@ class Renderer {
 
         gl.useProgram(this.prog);
         gl.uniformMatrix4fv(this.mvp, false, matrixMVP);
-
+        
         for (const mesh of meshes) {
             mesh.prepare(this.prog);
             mesh.draw();
