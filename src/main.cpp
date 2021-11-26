@@ -45,7 +45,6 @@ Vertex normalize(Vertex V) {
     return N;
 }
 
-
 Vertex vertexInterp(float isolevel, Vertex p1, Vertex p2, float v1, float v2){
     float mu;
     Vertex p;
@@ -124,18 +123,30 @@ void marchingCubes(Gridcell cell, float isolevel, Triangle* triangles, Vertex* n
 }
 
 extern "C" {
-    int generate_mesh(float* trianglesArray, float* normalsArray, float param1) {
+    int generate_mesh(float* trianglesArray, float* normalsArray, float isolevel) {
         const int min = 0, max = 10;
-        const float isolevel = 0.8;
+
+        FastNoiseLite noise;
+        noise.SetNoiseType(FastNoiseLite::NoiseType::NoiseType_OpenSimplex2);
 
         vector<vector<vector<float>>> pointCloud;
-        pointCloud.resize(max - min);
+        // pointCloud.resize(max - min);
+        // for (int x = 0; x < max - min; x++) {
+        //     pointCloud[x].resize(max - min);
+        //     for (int y = 0; y < max - min; y++) {
+        //         pointCloud[x][y].resize(max - min);
+        //         for (int z = 0; z < max - min; z++) {
+        //             pointCloud[x][y][z] = (rand() % 1000) / 1000.0f;
+        //         }
+        //     }
+        // }
+
         for (int x = 0; x < max - min; x++) {
-            pointCloud[x].resize(max - min);
+            pointCloud.push_back(vector<vector<float>>());
             for (int y = 0; y < max - min; y++) {
-                pointCloud[x][y].resize(max - min);
+                pointCloud[x].push_back(vector<float>());
                 for (int z = 0; z < max - min; z++) {
-                    pointCloud[x][y][z] = (rand() % 1000) / 1000.0f;
+                    pointCloud[x][y].push_back((noise.GetNoise((float)x * 100, (float)y * 100, (float)z * 100) + 1.0f) / 2.0f);
                 }
             }
         }
