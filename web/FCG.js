@@ -80,13 +80,15 @@ function nextChunk() {
 // invocado luego de que un chunk esta listo
 function chunkReady(result) {
     const chunk = chunks.find(chunk => chunk.x === result.x && chunk.y === result.y && chunk.z === result.z);
-    chunk.validIndex = result.validIndex;
-    if(chunk.mesh) {
-        // limpiar el mesh anterior
-        chunk.mesh.destroy();
+    if(chunk) {
+        chunk.validIndex = result.validIndex;
+        if(chunk.mesh) {
+            // limpiar el mesh anterior
+            chunk.mesh.destroy();
+        }
+        chunk.mesh = new Mesh(result.vertBuffer, result.normBuffer, renderer.gl);
+        screenDirty = true;
     }
-    chunk.mesh = new Mesh(result.vertBuffer, result.normBuffer, renderer.gl);
-    screenDirty = true;
     working = false;
     nextChunk();
 }
