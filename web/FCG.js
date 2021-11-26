@@ -8,8 +8,9 @@ const terrain_params = {
     generate,
 };
 
-gui.add(terrain_params, "size", 10, 100);
-gui.add(terrain_params, "isolevel", 0, 1);
+gui.add(terrain_params, "size", 10, 100).onChange(generate);
+gui.add(terrain_params, "isolevel", 0, 1).onChange(generate);
+
 
 if (!gl) {
     alert("Imposible inicializar WebGL. Tu navegador quizás no lo soporte.");
