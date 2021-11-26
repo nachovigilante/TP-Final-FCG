@@ -34,8 +34,8 @@ function generate() {
     let vertAddress = Module._malloc(80000000 * 10);
     let normAddress = Module._malloc(80000000 * 10);
     let numVerts = Module._generate_mesh(vertAddress, normAddress, terrain_params.size, terrain_params.isolevel);
-    let vertBuffer = Module.HEAPF32.subarray(vertAddress / 4, vertAddress / 4 + numVerts * 4);
-    let normBuffer = Module.HEAPF32.subarray(normAddress / 4, normAddress / 4 + numVerts * 4);
+    let vertBuffer = Module.HEAPF32.subarray(vertAddress / 4, vertAddress / 4 + numVerts * 3);
+    let normBuffer = Module.HEAPF32.subarray(normAddress / 4, normAddress / 4 + numVerts * 3);
     meshes.push(new Mesh(vertBuffer, normBuffer, renderer.gl));
     Module._free(vertAddress);
     Module._free(normAddress);
