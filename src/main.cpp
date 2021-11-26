@@ -18,11 +18,11 @@ typedef struct {
 
 typedef struct {
    Vertex p[8];
-   double val[8];
+   float val[8];
 } Gridcell;
 
-Vertex vertexInterp(double isolevel, Vertex p1, Vertex p2, double v1, double v2){
-    double mu;
+Vertex vertexInterp(float isolevel, Vertex p1, Vertex p2, float v1, float v2){
+    float mu;
     Vertex p;
 
     if (abs(isolevel-v1) < 0.00001 || abs(v1-v2) < 0.00001)
@@ -38,7 +38,7 @@ Vertex vertexInterp(double isolevel, Vertex p1, Vertex p2, double v1, double v2)
     return(p);
 }
 
-void marchingCubes(Gridcell cell, double isolevel, Triangle* triangles, int* numTriangles) {
+void marchingCubes(Gridcell cell, float isolevel, Triangle* triangles, int* numTriangles) {
     int cubeIndex = 0;
     
     // Busco qué vertices están dentro del cubo
@@ -97,7 +97,7 @@ void marchingCubes(Gridcell cell, double isolevel, Triangle* triangles, int* num
 extern "C" {
     int generate(float* trianglesArray, float param1) {
         const int min = 0, max = 100;
-        const double isolevel = 0.0;
+        const float isolevel = 0.0;
 
         vector<vector<vector<float>>> pointCloud;
         pointCloud.resize(max - min);
@@ -174,7 +174,7 @@ extern "C" {
 
 int main() {
     const int min = 0, max = 100;
-    const double isolevel = 0.0;
+    const float isolevel = 0.0;
 
     vector<vector<vector<float>>> pointCloud;
     pointCloud.resize(max - min);
