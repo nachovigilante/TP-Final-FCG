@@ -175,6 +175,8 @@ extern "C" {
             vertArray[i] = vertArray[i] * scale - offset;
         }
 
+        free(points);
+
         return numVertex;
     }
 }
