@@ -59,6 +59,7 @@ extern "C" {
         FastNoiseLite noise;
         noise.SetNoiseType(FastNoiseLite::NoiseType::NoiseType_Perlin);
 
+        const float FIXED_BOX_SIZE = 100;
         const int CELLS = SIZE * SIZE * SIZE;
         float* points = (float*)malloc(CELLS * sizeof(float));
 
@@ -66,7 +67,10 @@ extern "C" {
         for (int x = 0; x < SIZE; x++) {
             for (int y = 0; y < SIZE; y++) {
                 for (int z = 0; z < SIZE; z++) {
-                    float val = (noise.GetNoise((float)x, (float)y, (float)z) + 1.0f) / 2.0f;
+                    float xx = x * FIXED_BOX_SIZE / SIZE;
+                    float yy = y * FIXED_BOX_SIZE / SIZE;
+                    float zz = z * FIXED_BOX_SIZE / SIZE;
+                    float val = (noise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
 
                     points[x * SIZE * SIZE + y * SIZE + z] = val;
                 }

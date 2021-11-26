@@ -3,12 +3,12 @@ const gl = canvas.getContext("webgl", { antialias: false, depth: true });
 const gui = new dat.GUI({ name: "My GUI" });
 
 const terrain_params = {
-    size: 100,
+    size: 50,
     isolevel: 0.42,
     generate,
 };
 
-gui.add(terrain_params, "size", 10, 200);
+gui.add(terrain_params, "size", 10, 100);
 gui.add(terrain_params, "isolevel", 0, 1);
 
 if (!gl) {
