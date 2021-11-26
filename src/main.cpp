@@ -21,6 +21,79 @@ typedef struct {
    double val[8];
 } Gridcell;
 
+Vertex vertexInterp(double isolevel, Vertex p1, Vertex p2, double v1, double v2){
+    double mu;
+    Vertex p;
+
+    if (abs(isolevel-v1) < 0.00001 || abs(v1-v2) < 0.00001)
+        return(p1);
+    if (abs(isolevel-v2) < 0.00001)
+        return(p2);
+    
+    mu = (isolevel - v1) / (v2 - v1);
+    p.x = p1.x + mu * (p2.x - p1.x);
+    p.y = p1.y + mu * (p2.y - p1.y);
+    p.z = p1.z + mu * (p2.z - p1.z);
+
+    return(p);
+}
+
+void marchingCubes(Gridcell cell, double isolevel, Triangle* triangles, int* numTriangles) {
+    int cubeIndex = 0;
+    
+    // Busco qué vertices están dentro del cubo
+    // y determino el índice en edgeTable
+    if (cell.val[0] < isolevel) cubeIndex |= 1;
+    if (cell.val[1] < isolevel) cubeIndex |= 2;
+    if (cell.val[2] < isolevel) cubeIndex |= 4;
+    if (cell.val[3] < isolevel) cubeIndex |= 8;
+    if (cell.val[4] < isolevel) cubeIndex |= 16;
+    if (cell.val[5] < isolevel) cubeIndex |= 32;
+    if (cell.val[6] < isolevel) cubeIndex |= 64;
+    if (cell.val[7] < isolevel) cubeIndex |= 128;
+
+    // Si no hay ningún vertice dentro del cubo, no hago nada
+    if (edgeTable[cubeIndex] == 0) return;
+
+    // Si hay alguno, busco los triangulos
+    int edge = edgeTable[cubeIndex];
+    Vertex vertexList[12];
+
+    // Escribo los vertices en el arreglo
+    if (edge & 1)
+        vertexList[0] = vertexInterp(isolevel, cell.p[0], cell.p[1], cell.val[0], cell.val[1]);
+    if (edge & 2)
+        vertexList[1] = vertexInterp(isolevel, cell.p[1], cell.p[2], cell.val[1], cell.val[2]);
+    if (edge & 4)
+        vertexList[2] = vertexInterp(isolevel, cell.p[2], cell.p[3], cell.val[2], cell.val[3]);
+    if (edge & 8)
+        vertexList[3] = vertexInterp(isolevel, cell.p[3], cell.p[0], cell.val[3], cell.val[0]);
+    if (edge & 16)
+        vertexList[4] = vertexInterp(isolevel, cell.p[4], cell.p[5], cell.val[4], cell.val[5]);
+    if (edge & 32)
+        vertexList[5] = vertexInterp(isolevel, cell.p[5], cell.p[6], cell.val[5], cell.val[6]);
+    if (edge & 64)
+        vertexList[6] = vertexInterp(isolevel, cell.p[6], cell.p[7], cell.val[6], cell.val[7]);
+    if (edge & 128)
+        vertexList[7] = vertexInterp(isolevel, cell.p[7], cell.p[4], cell.val[7], cell.val[4]);
+    if (edge & 256)
+        vertexList[8] = vertexInterp(isolevel, cell.p[0], cell.p[4], cell.val[0], cell.val[4]);
+    if (edge & 512)
+        vertexList[9] = vertexInterp(isolevel, cell.p[1], cell.p[5], cell.val[1], cell.val[5]);
+    if (edge & 1024)
+        vertexList[10] = vertexInterp(isolevel, cell.p[2], cell.p[6], cell.val[2], cell.val[6]);
+    if (edge & 2048)
+        vertexList[11] = vertexInterp(isolevel, cell.p[3], cell.p[7], cell.val[3], cell.val[7]);
+
+    // Genero los triangulos
+    for (int i = 0; triTable[cubeIndex][i] != -1; i += 3) {
+        triangles[*numTriangles].p[0] = vertexList[triTable[cubeIndex][i]];
+        triangles[*numTriangles].p[1] = vertexList[triTable[cubeIndex][i+1]];
+        triangles[*numTriangles].p[2] = vertexList[triTable[cubeIndex][i+2]];
+        (*numTriangles)++;
+    }
+}
+
 extern "C" {
     int generate(float* trianglesArray, float param1) {
         const int min = 0, max = 100;
@@ -96,79 +169,6 @@ extern "C" {
         }
 
         return numTriangles * 3;
-    }
-}
-
-Vertex vertexInterp(double isolevel, Vertex p1, Vertex p2, double v1, double v2){
-    double mu;
-    Vertex p;
-
-    if (abs(isolevel-v1) < 0.00001 || abs(v1-v2) < 0.00001)
-        return(p1);
-    if (abs(isolevel-v2) < 0.00001)
-        return(p2);
-    
-    mu = (isolevel - v1) / (v2 - v1);
-    p.x = p1.x + mu * (p2.x - p1.x);
-    p.y = p1.y + mu * (p2.y - p1.y);
-    p.z = p1.z + mu * (p2.z - p1.z);
-
-    return(p);
-}
-
-void marchingCubes(Gridcell cell, double isolevel, Triangle* triangles, int* numTriangles) {
-    int cubeIndex = 0;
-    
-    // Busco qué vertices están dentro del cubo
-    // y determino el índice en edgeTable
-    if (cell.val[0] < isolevel) cubeIndex |= 1;
-    if (cell.val[1] < isolevel) cubeIndex |= 2;
-    if (cell.val[2] < isolevel) cubeIndex |= 4;
-    if (cell.val[3] < isolevel) cubeIndex |= 8;
-    if (cell.val[4] < isolevel) cubeIndex |= 16;
-    if (cell.val[5] < isolevel) cubeIndex |= 32;
-    if (cell.val[6] < isolevel) cubeIndex |= 64;
-    if (cell.val[7] < isolevel) cubeIndex |= 128;
-
-    // Si no hay ningún vertice dentro del cubo, no hago nada
-    if (edgeTable[cubeIndex] == 0) return;
-
-    // Si hay alguno, busco los triangulos
-    int edge = edgeTable[cubeIndex];
-    Vertex vertexList[12];
-
-    // Escribo los vertices en el arreglo
-    if (edge & 1)
-        vertexList[0] = vertexInterp(isolevel, cell.p[0], cell.p[1], cell.val[0], cell.val[1]);
-    if (edge & 2)
-        vertexList[1] = vertexInterp(isolevel, cell.p[1], cell.p[2], cell.val[1], cell.val[2]);
-    if (edge & 4)
-        vertexList[2] = vertexInterp(isolevel, cell.p[2], cell.p[3], cell.val[2], cell.val[3]);
-    if (edge & 8)
-        vertexList[3] = vertexInterp(isolevel, cell.p[3], cell.p[0], cell.val[3], cell.val[0]);
-    if (edge & 16)
-        vertexList[4] = vertexInterp(isolevel, cell.p[4], cell.p[5], cell.val[4], cell.val[5]);
-    if (edge & 32)
-        vertexList[5] = vertexInterp(isolevel, cell.p[5], cell.p[6], cell.val[5], cell.val[6]);
-    if (edge & 64)
-        vertexList[6] = vertexInterp(isolevel, cell.p[6], cell.p[7], cell.val[6], cell.val[7]);
-    if (edge & 128)
-        vertexList[7] = vertexInterp(isolevel, cell.p[7], cell.p[4], cell.val[7], cell.val[4]);
-    if (edge & 256)
-        vertexList[8] = vertexInterp(isolevel, cell.p[0], cell.p[4], cell.val[0], cell.val[4]);
-    if (edge & 512)
-        vertexList[9] = vertexInterp(isolevel, cell.p[1], cell.p[5], cell.val[1], cell.val[5]);
-    if (edge & 1024)
-        vertexList[10] = vertexInterp(isolevel, cell.p[2], cell.p[6], cell.val[2], cell.val[6]);
-    if (edge & 2048)
-        vertexList[11] = vertexInterp(isolevel, cell.p[3], cell.p[7], cell.val[3], cell.val[7]);
-
-    // Genero los triangulos
-    for (int i = 0; triTable[cubeIndex][i] != -1; i += 3) {
-        triangles[*numTriangles].p[0] = vertexList[triTable[cubeIndex][i]];
-        triangles[*numTriangles].p[1] = vertexList[triTable[cubeIndex][i+1]];
-        triangles[*numTriangles].p[2] = vertexList[triTable[cubeIndex][i+2]];
-        (*numTriangles)++;
     }
 }
 
