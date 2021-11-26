@@ -1,25 +1,50 @@
 #include <iostream>
-
+#include <vector>
 #include "FastNoiseLite.h"
 #include "triangulation.h"
-#include <vector>
 
 using namespace std;
 
-typedef struct {
+struct Vertex{
     float x;
     float y;
     float z;
-} Vertex;
+};
 
-typedef struct {
+Vertex operator-(Vertex a, Vertex b) {
+    Vertex c;
+    c.x = a.x - b.x;
+    c.y = a.y - b.y;
+    c.z = a.z - b.z;
+    return c;
+}
+
+struct Triangle{
    Vertex p[3];
-} Triangle;
+};
 
-typedef struct {
+struct Gridcell{
    Vertex p[8];
    float val[8];
-} Gridcell;
+};
+
+Vertex crossProduct(Vertex A, Vertex B) {
+    Vertex C;
+    C.x = A.y * B.z - A.z * B.y;
+    C.y = A.z * B.x - A.x * B.z;
+    C.z = A.x * B.y - A.y * B.x;
+    return C;
+}
+
+Vertex normalize(Vertex V) {
+    float length = sqrt(V.x * V.x + V.y * V.y + V.z * V.z);
+    Vertex N;
+    N.x = V.x / length;
+    N.y = V.y / length;
+    N.z = V.z / length;
+    return N;
+}
+
 
 Vertex vertexInterp(float isolevel, Vertex p1, Vertex p2, float v1, float v2){
     float mu;
@@ -38,7 +63,7 @@ Vertex vertexInterp(float isolevel, Vertex p1, Vertex p2, float v1, float v2){
     return(p);
 }
 
-void marchingCubes(Gridcell cell, float isolevel, Triangle* triangles, int* numTriangles) {
+void marchingCubes(Gridcell cell, float isolevel, Triangle* triangles, Vertex* normals, int* numTriangles) {
     int cubeIndex = 0;
     
     // Busco qué vertices están dentro del cubo
@@ -90,12 +115,16 @@ void marchingCubes(Gridcell cell, float isolevel, Triangle* triangles, int* numT
         triangles[*numTriangles].p[0] = vertexList[triTable[cubeIndex][i]];
         triangles[*numTriangles].p[1] = vertexList[triTable[cubeIndex][i+1]];
         triangles[*numTriangles].p[2] = vertexList[triTable[cubeIndex][i+2]];
+        
+        Vertex normal = crossProduct(triangles[*numTriangles].p[1] - triangles[*numTriangles].p[0], triangles[*numTriangles].p[2] - triangles[*numTriangles].p[0]);
+        normalize(normal);
+        normals[*numTriangles] = normal;
         (*numTriangles)++;
     }
 }
 
 extern "C" {
-    int generate(float* trianglesArray, float param1) {
+    int generate(float* trianglesArray, float* normalsArray, float param1) {
         const int min = 0, max = 10;
         const float isolevel = 0.8;
 
@@ -113,10 +142,11 @@ extern "C" {
 
         int numTriangles = 0;
         Triangle* triangles = new Triangle[(max - min) * (max - min) * (max - min) * 5];
+        Vertex* normals = new Vertex[(max - min) * (max - min) * (max - min) * 5];
 
-        for (int x = 0; x < max - min; x++) {
-            for (int y = 0; y < max - min; y++) {
-                for (int z = 0; z < max - min; z++) {
+        for (int x = 0; x < max - min - 1; x++) {
+            for (int y = 0; y < max - min - 1; y++) {
+                for (int z = 0; z < max - min - 1; z++) {
                     Gridcell cell;
                     cell.p[0].x = x;
                     cell.p[0].y = y;
@@ -150,7 +180,7 @@ extern "C" {
                     cell.val[5] = pointCloud[x + 1][y + 1][z];
                     cell.val[6] = pointCloud[x + 1][y + 1][z + 1];
                     cell.val[7] = pointCloud[x][y + 1][z + 1];
-                    marchingCubes(cell, isolevel, triangles, &numTriangles);
+                    marchingCubes(cell, isolevel, triangles, normals, &numTriangles);
                 }
             }
         }
@@ -166,6 +196,10 @@ extern "C" {
             trianglesArray[i * 9 + 6] = triangles[i].p[2].x;
             trianglesArray[i * 9 + 7] = triangles[i].p[2].y;
             trianglesArray[i * 9 + 8] = triangles[i].p[2].z;
+
+            normalsArray[i * 3 + 0] = normals[i].x;
+            normalsArray[i * 3 + 1] = normals[i].y;
+            normalsArray[i * 3 + 2] = normals[i].z;
         }
 
         return numTriangles * 3;
@@ -174,7 +208,8 @@ extern "C" {
 
 int main() {
     float* trianglesArray = (float*)malloc(100 * 100 * 100 * 1000);
-    int numTriangles = generate(trianglesArray, 0.0);
+    float* normalsArray = (float*)malloc(100 * 100 * 100 * 1000);
+    int numTriangles = generate(trianglesArray, normalsArray, 0.0);
     cout << "Numero de triangulos: " << numTriangles << endl;
 
     return 0;
