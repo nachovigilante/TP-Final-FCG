@@ -8,5 +8,5 @@ include_directories(../deps/FastNoiseLite/Cpp)
 add_executable(Native main.cpp)
 
 if(EMSCRIPTEN)
-    target_link_libraries(Native "-s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS=['_generate_mesh','_malloc','_free'] -o ../web/Native.js")
+    target_link_libraries(Native "-O3 -s ALLOW_MEMORY_GROWTH=1 -s -s EXPORTED_FUNCTIONS=['_generate_mesh','_malloc','_free'] -o ../web/Native.js")
 endif()

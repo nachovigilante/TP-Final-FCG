@@ -1,44 +1,10 @@
 #include <iostream>
 #include <vector>
 #include "FastNoiseLite.h"
+#include "vertex.h"
 #include "triangulation.h"
 
 using namespace std;
-
-struct Vertex {
-    float x;
-    float y;
-    float z;
-};
-
-Vertex operator-(const Vertex& a, const Vertex& b) {
-    Vertex c;
-    c.x = a.x - b.x;
-    c.y = a.y - b.y;
-    c.z = a.z - b.z;
-    return c;
-}
-
-Vertex operator*(const Vertex& a, const float& b) {
-    return { a.x * b, a.y * b, a.z * b };
-}
-
-Vertex crossProduct(const Vertex& A, const Vertex& B) {
-    Vertex C;
-    C.x = A.y * B.z - A.z * B.y;
-    C.y = A.z * B.x - A.x * B.z;
-    C.z = A.x * B.y - A.y * B.x;
-    return C;
-}
-
-Vertex normalize(const Vertex& V) {
-    float length = sqrt(V.x * V.x + V.y * V.y + V.z * V.z);
-    Vertex N;
-    N.x = V.x / length;
-    N.y = V.y / length;
-    N.z = V.z / length;
-    return N;
-}
 
 inline Vertex vertexInterp(const float isolevel, const Vertex& p1, const  Vertex& p2, const float v1, const float v2) {
     if (abs(isolevel - v1) < 0.00001 || abs(v1 - v2) < 0.00001)
@@ -55,7 +21,7 @@ inline Vertex vertexInterp(const float isolevel, const Vertex& p1, const  Vertex
 }
 
 extern "C" {
-    int generate_mesh(Vertex* vertArray, Vertex* normArray, const int SIZE, const float isolevel) {
+    int generate_mesh(Vertex* vertArray, Vertex* normArray, const int CHUNK_X, const int CHUNK_Y, const int CHUNK_Z, const int SIZE, const float isolevel) {
         FastNoiseLite noise;
         noise.SetNoiseType(FastNoiseLite::NoiseType::NoiseType_Perlin);
 
@@ -68,9 +34,9 @@ extern "C" {
         for (int x = 0; x < SIZE1; x++) {
             for (int y = 0; y < SIZE1; y++) {
                 for (int z = 0; z < SIZE1; z++) {
-                    float xx = x * FIXED_BOX_SIZE / SIZE1;
-                    float yy = y * FIXED_BOX_SIZE / SIZE1;
-                    float zz = z * FIXED_BOX_SIZE / SIZE1;
+                    float xx = CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE1;
+                    float yy = CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE1;
+                    float zz = CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE1;
                     float val = (noise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
 
                     points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = val;
@@ -184,7 +150,7 @@ extern "C" {
 int main() {
     Vertex* trianglesArray = (Vertex*)malloc(100 * 100 * 100 * 1000);
     Vertex* normalsArray = (Vertex*)malloc(100 * 100 * 100 * 1000);
-    int numTriangles = generate_mesh(trianglesArray, normalsArray, 100, 0.5);
+    int numTriangles = generate_mesh(trianglesArray, normalsArray, 0, 0, 0, 100, 0.5);
     cout << "Numero de triangulos: " << numTriangles << endl;
 
     return 0;

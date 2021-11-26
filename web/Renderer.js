@@ -32,8 +32,6 @@ class Renderer {
     draw(matrixMVP, meshes) {
         const { canvas, gl } = this;
 
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
         gl.useProgram(this.prog);
         gl.uniformMatrix4fv(this.mvp, false, matrixMVP);
         
@@ -42,7 +40,7 @@ class Renderer {
             mesh.draw();
         }
 
-        this.boxdrawer.draw(matrixMVP);
+        //this.boxdrawer.draw(matrixMVP);
     }
 }
 

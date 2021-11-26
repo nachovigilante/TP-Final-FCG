@@ -1,55 +1,130 @@
 const canvas = document.getElementById("canvas");
 const gl = canvas.getContext("webgl", { antialias: false, depth: true });
-const gui = new dat.GUI({ name: "My GUI" });
-
-const terrain_params = {
-    size: 50,
-    isolevel: 0.42,
-    generate,
-};
-
-gui.add(terrain_params, "size", 10, 100).onChange(generate);
-gui.add(terrain_params, "isolevel", 0, 1).onChange(generate);
-
-
 if (!gl) {
     alert("Imposible inicializar WebGL. Tu navegador quizás no lo soporte.");
     crash;
 }
 
+const gui = new dat.GUI();
+const stats = new Stats();
+
+stats.domElement.classList.add("stats");
+document.body.appendChild(stats.domElement);
+
+const terrain_params = {
+    render_distance: 1,
+    size: 50,
+    isolevel: 0.42,
+};
+
+gui.add(terrain_params, "render_distance", 1, 5).step(1).onChange(invalidateAllChunks);
+gui.add(terrain_params, "size", 10, 100).onChange(invalidateAllChunks);
+gui.add(terrain_params, "isolevel", 0, 1).onChange(invalidateAllChunks);
+
 const renderer = new Renderer(canvas, gl);
-let meshes = [];
-let dirty = true;
+const worker = new Worker("WebWorker.js");
+let chunks = [];
+let working = false; // si el worker esta trabajando
+let screenDirty = true; // si hay que volver a dibujar
 
-function generate() {
-    for(const mesh of meshes) {
-        mesh.destroy();
+// marca todos los chunks como invalidos, hay que volver a generarlos
+function invalidateAllChunks() {
+    // marcar existentes como invalidos
+    for(const chunk of chunks) {
+        chunk.valid = false;
     }
-    meshes = [];
+    // sacar los que estan fuera del render distance
+    chunks = chunks.filter(chunk => chunk.d < terrain_params.render_distance);
+    // crear los que faltan (no es muy elegante, pero it works)
+    const D = terrain_params.render_distance - 1;
+    for(let x = -D; x <= D; x++) {
+        for(let y = -D; y <= D; y++) {
+            for(let z = -D; z <= D; z++) {
+                if(!chunks.find(chunk => chunk.x === x && chunk.y === y && chunk.z === z)) {
+                    chunks.push({
+                        x,
+                        y,
+                        z,
+                        d: Math.min(Math.min(Math.abs(x), Math.abs(y)), Math.abs(z)),
+                        valid: false,
+                    });
+                }
+            }
+        }
+    }
+    nextChunk();
+}
 
-    let vertAddress = Module._malloc(80000000 * 10);
-    let normAddress = Module._malloc(80000000 * 10);
-    let numVerts = Module._generate_mesh(vertAddress, normAddress, terrain_params.size, terrain_params.isolevel);
-    let vertBuffer = Module.HEAPF32.subarray(vertAddress / 4, vertAddress / 4 + numVerts * 3);
-    let normBuffer = Module.HEAPF32.subarray(normAddress / 4, normAddress / 4 + numVerts * 3);
-    meshes.push(new Mesh(vertBuffer, normBuffer, renderer.gl));
-    Module._free(vertAddress);
-    Module._free(normAddress);
+// intenta generar un chunk
+function nextChunk() {
+    if(working) return;
 
-    dirty = true;
+    // busco el chunk invalido mas cercano al origen
+    const closest = chunks.filter(chunk => !chunk.valid).sort((a, b) => a.d - b.d);
+    if(closest.length === 0) return;
+    const chunk = closest[0];
+
+    worker.postMessage({
+        x: chunk.x,
+        y: chunk.y,
+        z: chunk.z,
+        params: [
+            terrain_params.size,
+            terrain_params.isolevel,
+        ]
+    });
+    working = true;
+}
+
+// invocado luego de que un chunk esta listo
+function chunkReady(result) {
+    const chunk = chunks.find(chunk => chunk.x === result.x && chunk.y === result.y && chunk.z === result.z);
+    chunk.valid = true;
+    if(chunk.mesh) {
+        // limpiar el mesh anterior
+        chunk.mesh.destroy();
+    }
+    chunk.mesh = new Mesh(result.vertBuffer, result.normBuffer, renderer.gl);
+    screenDirty = true;
+    working = false;
+    nextChunk();
+}
+
+function frame() {
+    stats.begin();
+    // con esto evitamos renderizar cosas innecesarias
+    if (screenDirty) {
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        
+        let perspectiveMatrix = ProjectionMatrix(canvas, -10);
+        perspectiveMatrix = MatrixMult(perspectiveMatrix, GetModelViewMatrix(0, 0, transZ, rotX, rotY));
+        
+        let i = 0;
+        for(const chunk of chunks) {
+            if(chunk.mesh) {
+                const mv = GetModelViewMatrix(2*chunk.x, 2*chunk.y, 2*chunk.z, 0, 0);
+                const mvp = MatrixMult(perspectiveMatrix, mv);
+                renderer.draw(mvp, [chunk.mesh]);
+            }
+        }
+
+        screenDirty = false;
+    }
+    stats.end();
+    requestAnimationFrame(frame);
 }
 
 let rotX = 0, rotY = 0, transZ = 3;
 
 window.onresize = () => {
     renderer.resize();
-    dirty = true;
+    screenDirty = true;
 };
-Module.onRuntimeInitialized = () => {
+const launch = () => {
     // Evento de zoom (ruedita)
     canvas.zoom = function (s) {
         transZ *= s / canvas.height + 1;
-        dirty = true;
+        screenDirty = true;
     };
     canvas.onwheel = (event) => canvas.zoom(0.3 * event.deltaY);
 
@@ -69,7 +144,7 @@ Module.onRuntimeInitialized = () => {
                 rotX += ((cy - event.clientY) / canvas.height) * 5;
                 cx = event.clientX;
                 cy = event.clientY;
-                dirty = true;
+                screenDirty = true;
             };
         }
     };
@@ -77,20 +152,15 @@ Module.onRuntimeInitialized = () => {
     canvas.onmouseup = canvas.onmouseleave = () => canvas.onmousemove = null;
     canvas.oncontextmenu = () => false;
 
-    function frame() {
-        // con esto evitamos renderizar cosas innecesarias
-        if (dirty) {
-            const perspectiveMatrix = ProjectionMatrix(canvas, -10);
-            const mv = GetModelViewMatrix(0, 0, transZ, rotX, rotY);
-            const mvp = MatrixMult(perspectiveMatrix, mv);
-            
-            renderer.draw(mvp, meshes);
-
-            dirty = false;
-        }
-        requestAnimationFrame(frame);
-    }
-
-    generate();
+    invalidateAllChunks();
+    nextChunk();
     frame();
 };
+
+worker.onmessage = (ev) => {
+    if(ev.data === "ready") {
+        launch();
+    } else {
+        chunkReady(ev.data);
+    }
+}
