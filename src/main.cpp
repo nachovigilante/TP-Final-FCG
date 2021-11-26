@@ -60,19 +60,20 @@ extern "C" {
         noise.SetNoiseType(FastNoiseLite::NoiseType::NoiseType_Perlin);
 
         const float FIXED_BOX_SIZE = 100;
-        const int CELLS = SIZE * SIZE * SIZE;
+        const int SIZE1 = SIZE + 1;
+        const int CELLS = SIZE1 * SIZE1 * SIZE1;
         float* points = (float*)malloc(CELLS * sizeof(float));
 
         // 1. Generar la nube de puntos
-        for (int x = 0; x < SIZE; x++) {
-            for (int y = 0; y < SIZE; y++) {
-                for (int z = 0; z < SIZE; z++) {
-                    float xx = x * FIXED_BOX_SIZE / SIZE;
-                    float yy = y * FIXED_BOX_SIZE / SIZE;
-                    float zz = z * FIXED_BOX_SIZE / SIZE;
+        for (int x = 0; x < SIZE1; x++) {
+            for (int y = 0; y < SIZE1; y++) {
+                for (int z = 0; z < SIZE1; z++) {
+                    float xx = x * FIXED_BOX_SIZE / SIZE1;
+                    float yy = y * FIXED_BOX_SIZE / SIZE1;
+                    float zz = z * FIXED_BOX_SIZE / SIZE1;
                     float val = (noise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
 
-                    points[x * SIZE * SIZE + y * SIZE + z] = val;
+                    points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = val;
                 }
             }
         }
@@ -83,9 +84,9 @@ extern "C" {
         Vertex vertexList[12];
 
         // 2. Marching Cubes
-        for (int x = 0; x < SIZE - 1; x++) {
-            for (int y = 0; y < SIZE - 1; y++) {
-                for (int z = 0; z < SIZE - 1; z++) {
+        for (int x = 0; x < SIZE; x++) {
+            for (int y = 0; y < SIZE; y++) {
+                for (int z = 0; z < SIZE; z++) {
                     float xx = x;
                     float yy = y;
                     float zz = z;
@@ -99,14 +100,14 @@ extern "C" {
                     p[7] = { xx , yy + 1, zz + 1 };
 
                     int cubeIndex = 0;
-                    val[0] = points[(x + 0) * SIZE * SIZE + (y + 0) * SIZE + (z + 0)];
-                    val[1] = points[(x + 1) * SIZE * SIZE + (y + 0) * SIZE + (z + 0)];
-                    val[2] = points[(x + 1) * SIZE * SIZE + (y + 0) * SIZE + (z + 1)];
-                    val[3] = points[(x + 0) * SIZE * SIZE + (y + 0) * SIZE + (z + 1)];
-                    val[4] = points[(x + 0) * SIZE * SIZE + (y + 1) * SIZE + (z + 0)];
-                    val[5] = points[(x + 1) * SIZE * SIZE + (y + 1) * SIZE + (z + 0)];
-                    val[6] = points[(x + 1) * SIZE * SIZE + (y + 1) * SIZE + (z + 1)];
-                    val[7] = points[(x + 0) * SIZE * SIZE + (y + 1) * SIZE + (z + 1)];
+                    val[0] = points[(x + 0) * SIZE1 * SIZE1 + (y + 0) * SIZE1 + (z + 0)];
+                    val[1] = points[(x + 1) * SIZE1 * SIZE1 + (y + 0) * SIZE1 + (z + 0)];
+                    val[2] = points[(x + 1) * SIZE1 * SIZE1 + (y + 0) * SIZE1 + (z + 1)];
+                    val[3] = points[(x + 0) * SIZE1 * SIZE1 + (y + 0) * SIZE1 + (z + 1)];
+                    val[4] = points[(x + 0) * SIZE1 * SIZE1 + (y + 1) * SIZE1 + (z + 0)];
+                    val[5] = points[(x + 1) * SIZE1 * SIZE1 + (y + 1) * SIZE1 + (z + 0)];
+                    val[6] = points[(x + 1) * SIZE1 * SIZE1 + (y + 1) * SIZE1 + (z + 1)];
+                    val[7] = points[(x + 0) * SIZE1 * SIZE1 + (y + 1) * SIZE1 + (z + 1)];
 
                     // Busco qué vertices están dentro del cubo
                     // y determino el índice en edgeTable
