@@ -26,9 +26,9 @@ const meshes = [];
 let dirty = true;
 
 function generate() {
-    let address = Module._malloc(8000000 * 8);
+    let address = Module._malloc(80000000 * 10);
     let numVerts = Module._generate(address, terrain_params.param1);
-    let buffer = Module.HEAPF32.slice(address / 4, address / 4 + numVerts)
+    let buffer = Module.HEAPF32.slice(address / 4, address / 4 + numVerts * 4)
     console.log(buffer);
     meshes.push(new Mesh(buffer, renderer.gl));
     //Module._free(buffer);

@@ -96,8 +96,8 @@ void marchingCubes(Gridcell cell, float isolevel, Triangle* triangles, int* numT
 
 extern "C" {
     int generate(float* trianglesArray, float param1) {
-        const int min = 0, max = 100;
-        const float isolevel = 0.2;
+        const int min = 0, max = 10;
+        const float isolevel = 0.8;
 
         vector<vector<vector<float>>> pointCloud;
         pointCloud.resize(max - min);
@@ -114,9 +114,9 @@ extern "C" {
         int numTriangles = 0;
         Triangle* triangles = new Triangle[(max - min) * (max - min) * (max - min) * 5];
 
-        for (int x = 0; x < max - min - 1; x++) {
-            for (int y = 0; y < max - min - 1; y++) {
-                for (int z = 0; z < max - min - 1; z++) {
+        for (int x = 0; x < max - min; x++) {
+            for (int y = 0; y < max - min; y++) {
+                for (int z = 0; z < max - min; z++) {
                     Gridcell cell;
                     cell.p[0].x = x;
                     cell.p[0].y = y;
