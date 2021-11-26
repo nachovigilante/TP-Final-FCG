@@ -57,7 +57,7 @@ extern "C" {
                     float zz = CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE;
                     float val = (noise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
         
-                    points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = y * 0.2 - val;
+                    points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = -y * 0.2 + val;
                 }
             }
         }
