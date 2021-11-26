@@ -17,11 +17,6 @@ if (!gl) {
     crash;
 }
 
-Module.onRuntimeInitialized = () => {
-    gui.add(terrain_params, "generate");
-    generate();
-};
-
 const renderer = new Renderer(canvas, gl);
 let meshes = [];
 let dirty = true;
@@ -50,7 +45,7 @@ window.onresize = () => {
     renderer.resize();
     dirty = true;
 };
-window.onload = () => {
+Module.onRuntimeInitialized = () => {
     // Evento de zoom (ruedita)
     canvas.zoom = function (s) {
         transZ *= s / canvas.height + 1;
@@ -96,5 +91,6 @@ window.onload = () => {
         requestAnimationFrame(frame);
     }
 
+    generate();
     frame();
 };
