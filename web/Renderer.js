@@ -76,7 +76,7 @@ void main()
 {
     vec3 C = normCoord;
     if(invalid > 0.5) {
-        C *= 0.2;
+        // C *= 0.2;
     }
     gl_FragColor = vec4(C, 1.0);
 }
