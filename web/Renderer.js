@@ -77,7 +77,7 @@ varying vec4 vertCoord;
 
 void main()
 {
-    vec3 C = vec3(1.0, 0.0, 1.0);
-    gl_FragColor = vec4(vertCoord.xyz, 1.0);
+    vec3 C = normCoord;
+    gl_FragColor = vec4(C, 1.0);
 }
 `;

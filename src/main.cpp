@@ -124,7 +124,7 @@ void marchingCubes(Gridcell cell, float isolevel, Triangle* triangles, Vertex* n
 }
 
 extern "C" {
-    int generate(float* trianglesArray, float* normalsArray, float param1) {
+    int generate_mesh(float* trianglesArray, float* normalsArray, float param1) {
         const int min = 0, max = 10;
         const float isolevel = 0.8;
 
@@ -215,7 +215,7 @@ extern "C" {
 int main() {
     float* trianglesArray = (float*)malloc(100 * 100 * 100 * 1000);
     float* normalsArray = (float*)malloc(100 * 100 * 100 * 1000);
-    int numTriangles = generate(trianglesArray, normalsArray, 0.0);
+    int numTriangles = generate_mesh(trianglesArray, normalsArray, 0.0);
     cout << "Numero de triangulos: " << numTriangles << endl;
 
     return 0;

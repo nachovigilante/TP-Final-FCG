@@ -26,13 +26,14 @@ const meshes = [];
 let dirty = true;
 
 function generate() {
-    let address = Module._malloc(80000000 * 10);
-    let numVerts = Module._generate(address, terrain_params.param1);
-    let buffer = Module.HEAPF32.slice(address / 4, address / 4 + numVerts * 4)
-    console.log(buffer);
-    meshes.push(new Mesh(buffer, renderer.gl));
-    //Module._free(buffer);
-
+    let vertAddress = Module._malloc(80000000 * 10);
+    let normAddress = Module._malloc(80000000 * 10);
+    let numVerts = Module._generate_mesh(vertAddress, normAddress, terrain_params.param1);
+    let vertBuffer = Module.HEAPF32.slice(vertAddress / 4, vertAddress / 4 + numVerts * 4);
+    let normBuffer = Module.HEAPF32.slice(normAddress / 4, normAddress / 4 + numVerts * 4);
+    meshes.push(new Mesh(vertBuffer, normBuffer, renderer.gl));
+    Module._free(vertAddress);
+    Module._free(normAddress);
 
     dirty = true;
 }
