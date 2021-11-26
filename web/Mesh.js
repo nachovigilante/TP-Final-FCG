@@ -12,6 +12,11 @@ class Mesh {
         gl.bufferData(gl.ARRAY_BUFFER, normPos, gl.STATIC_DRAW);
     }
 
+    destroy() {
+        this.gl.deleteBuffer(this.vertex_buffer);
+        this.gl.deleteBuffer(this.normal_buffer);
+    }
+
     prepare(prog) {
         this.prog = prog;
 		this.location_pos = this.gl.getAttribLocation(this.prog, 'pos');

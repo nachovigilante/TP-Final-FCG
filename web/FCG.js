@@ -22,10 +22,15 @@ Module.onRuntimeInitialized = () => {
 };
 
 const renderer = new Renderer(canvas, gl);
-const meshes = [];
+let meshes = [];
 let dirty = true;
 
 function generate() {
+    for(const mesh of meshes) {
+        mesh.destroy();
+    }
+    meshes = [];
+
     let vertAddress = Module._malloc(80000000 * 10);
     let normAddress = Module._malloc(80000000 * 10);
     let numVerts = Module._generate_mesh(vertAddress, normAddress, terrain_params.isolevel);
