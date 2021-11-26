@@ -3,12 +3,12 @@ const gl = canvas.getContext("webgl", { antialias: false, depth: true });
 const gui = new dat.GUI({ name: "My GUI" });
 
 const terrain_params = {
-    param1: 42,
+    isolevel: 0.4,
     param2: 69,
     generate,
 };
 
-gui.add(terrain_params, "param1", 0, 100);
+gui.add(terrain_params, "isolevel", 0, 1);
 gui.add(terrain_params, "param2", 0, 100);
 
 if (!gl) {
@@ -28,7 +28,7 @@ let dirty = true;
 function generate() {
     let vertAddress = Module._malloc(80000000 * 10);
     let normAddress = Module._malloc(80000000 * 10);
-    let numVerts = Module._generate_mesh(vertAddress, normAddress, terrain_params.param1);
+    let numVerts = Module._generate_mesh(vertAddress, normAddress, terrain_params.isolevel);
     let vertBuffer = Module.HEAPF32.slice(vertAddress / 4, vertAddress / 4 + numVerts * 4);
     let normBuffer = Module.HEAPF32.slice(normAddress / 4, normAddress / 4 + numVerts * 4);
     meshes.push(new Mesh(vertBuffer, normBuffer, renderer.gl));
