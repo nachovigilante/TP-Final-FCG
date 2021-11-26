@@ -21,9 +21,13 @@ inline Vertex vertexInterp(const float isolevel, const Vertex& p1, const  Vertex
 }
 
 extern "C" {
-    int generate_mesh(Vertex* vertArray, Vertex* normArray, const int CHUNK_X, const int CHUNK_Y, const int CHUNK_Z, const int SIZE, const float isolevel) {
+    int generate_mesh(Vertex* vertArray, Vertex* normArray, const int CHUNK_X, const int CHUNK_Y, const int CHUNK_Z, const int SIZE, const float isolevel, const float frequency, const int octaves, const float lacunarity, const float gain) {
         FastNoiseLite noise;
         noise.SetNoiseType(FastNoiseLite::NoiseType::NoiseType_Perlin);
+        noise.SetFrequency(frequency);
+        noise.SetFractalOctaves(octaves);
+        noise.SetFractalLacunarity(lacunarity);
+        noise.SetFractalGain(gain);
 
         const float FIXED_BOX_SIZE = 100;
         const int SIZE1 = SIZE + 1;
@@ -150,7 +154,7 @@ extern "C" {
 int main() {
     Vertex* trianglesArray = (Vertex*)malloc(100 * 100 * 100 * 1000);
     Vertex* normalsArray = (Vertex*)malloc(100 * 100 * 100 * 1000);
-    int numTriangles = generate_mesh(trianglesArray, normalsArray, 0, 0, 0, 100, 0.5);
+    int numTriangles = generate_mesh(trianglesArray, normalsArray, 0, 0, 0, 100, 0.5, 0.05, 3, 2.0, 0.5);
     cout << "Numero de triangulos: " << numTriangles << endl;
 
     return 0;
