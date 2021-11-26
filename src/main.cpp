@@ -197,9 +197,15 @@ extern "C" {
             trianglesArray[i * 9 + 7] = triangles[i].p[2].y;
             trianglesArray[i * 9 + 8] = triangles[i].p[2].z;
 
-            normalsArray[i * 3 + 0] = normals[i].x;
-            normalsArray[i * 3 + 1] = normals[i].y;
-            normalsArray[i * 3 + 2] = normals[i].z;
+            normalsArray[i * 9 + 0] = normals[i].x;
+            normalsArray[i * 9 + 1] = normals[i].y;
+            normalsArray[i * 9 + 2] = normals[i].z;
+            normalsArray[i * 9 + 3] = normals[i].x;
+            normalsArray[i * 9 + 4] = normals[i].y;
+            normalsArray[i * 9 + 5] = normals[i].z;
+            normalsArray[i * 9 + 6] = normals[i].x;
+            normalsArray[i * 9 + 7] = normals[i].y;
+            normalsArray[i * 9 + 8] = normals[i].z;
         }
 
         return numTriangles * 3;
