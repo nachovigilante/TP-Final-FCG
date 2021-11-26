@@ -13,12 +13,12 @@ document.body.appendChild(stats.domElement);
 
 const terrain_params = {
     render_distance: 1,
-    size: 50,
+    size: 25,
     isolevel: 0.42,
 };
 
 gui.add(terrain_params, "render_distance", 1, 5).step(1).onChange(invalidateAllChunks);
-gui.add(terrain_params, "size", 10, 100).onChange(invalidateAllChunks);
+gui.add(terrain_params, "size", 10, 50).onChange(invalidateAllChunks);
 gui.add(terrain_params, "isolevel", 0, 1).onChange(invalidateAllChunks);
 
 const renderer = new Renderer(canvas, gl);
@@ -96,15 +96,17 @@ function frame() {
     if (screenDirty) {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         
-        let perspectiveMatrix = ProjectionMatrix(canvas, -10);
-        perspectiveMatrix = MatrixMult(perspectiveMatrix, GetModelViewMatrix(0, 0, transZ, rotX, rotY));
-        
-        let i = 0;
+        const CamMatrix = MatrixMult(
+            ProjectionMatrix(canvas, -10),
+            TranslationMatrix(0, 0, transZ),
+            RotationMatrix(rotX, rotY)
+        );
+
         for(const chunk of chunks) {
             if(chunk.mesh) {
-                const mv = GetModelViewMatrix(2*chunk.x, 2*chunk.y, 2*chunk.z, 0, 0);
-                const mvp = MatrixMult(perspectiveMatrix, mv);
-                renderer.draw(mvp, [chunk.mesh]);
+                const ModelMatrix = TranslationMatrix(2*chunk.x, 2*chunk.y, 2*chunk.z);
+                const MVP = MatrixMult(CamMatrix, ModelMatrix);
+                renderer.draw(MVP, [chunk.mesh]);
             }
         }
 

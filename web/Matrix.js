@@ -16,7 +16,7 @@ function ProjectionMatrix(c, z, fov_angle=60) {
 
 // Multiplica 2 matrices y devuelve A*B.
 // Los argumentos y el resultado son arreglos que representan matrices en orden column-major
-function MatrixMult(A, B) {
+function MatrixMultSingle(A, B) {
 	var C = [];
 	for ( var i=0; i<4; ++i ) 
 	{
@@ -34,16 +34,24 @@ function MatrixMult(A, B) {
 	return C;
 }
 
-function GetModelViewMatrix( translationX, translationY, translationZ, rotationX, rotationY )
-{
-	// Matriz de traslación
-	var trans = [
+function MatrixMult(...matrices) {
+    var result = matrices[0];
+    for ( var i=1; i<matrices.length; ++i ) {
+        result = MatrixMultSingle(result, matrices[i]);
+    }
+    return result;
+}
+
+function TranslationMatrix(tX, tY, tZ) {
+	return [
 		1, 0, 0, 0,
 		0, 1, 0, 0,
 		0, 0, 1, 0,
-		translationX, translationY, translationZ, 1
+		tX, tY, tZ, 1
 	];
+}
 
+function RotationMatrix(rotationX, rotationY) {
 	var rotX = [
 		1,0,0,0, 
 		0, Math.cos(rotationX), Math.sin(rotationX), 0,
@@ -58,8 +66,14 @@ function GetModelViewMatrix( translationX, translationY, translationZ, rotationX
 		0,0,0,1 
 	];
 
-	var mv = trans;
-	mv = MatrixMult( mv, rotX );	
-	mv = MatrixMult( mv, rotY );
-	return mv;
+	return MatrixMult(rotX, rotY);
+}
+
+function ScaleMatrix(scaleX, scaleY, scaleZ) {
+    return [
+        scaleX, 0, 0, 0,
+        0, scaleY, 0, 0,
+        0, 0, scaleZ, 0,
+        0, 0, 0, 1
+    ];
 }
