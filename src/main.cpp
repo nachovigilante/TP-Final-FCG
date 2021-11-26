@@ -7,9 +7,9 @@
 using namespace std;
 
 typedef struct {
-    int x;
-    int y;
-    int z;
+    float x;
+    float y;
+    float z;
 } Vertex;
 
 typedef struct {
@@ -173,7 +173,7 @@ extern "C" {
 }
 
 int main() {
-        const int min = 0, max = 100;
+    const int min = 0, max = 100;
     const double isolevel = 0.0;
 
     vector<vector<vector<float>>> pointCloud;
