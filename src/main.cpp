@@ -28,18 +28,16 @@ typedef struct {
    double val[8];
 } Gridcell;
 
-Vertex VertexInterp(double isolevel, Vertex p1, Vertex p2, double valp1, double valp2){
+Vertex vertexInterp(double isolevel, Vertex p1, Vertex p2, double v1, double v2){
     double mu;
     Vertex p;
 
-    if (abs(isolevel-valp1) < 0.00001)
+    if (abs(isolevel-v1) < 0.00001 || abs(v1-v2) < 0.00001)
         return(p1);
-    if (abs(isolevel-valp2) < 0.00001)
+    if (abs(isolevel-v2) < 0.00001)
         return(p2);
-    if (abs(valp1-valp2) < 0.00001)
-        return(p1);
     
-    mu = (isolevel - valp1) / (valp2 - valp1);
+    mu = (isolevel - v1) / (v2 - v1);
     p.x = p1.x + mu * (p2.x - p1.x);
     p.y = p1.y + mu * (p2.y - p1.y);
     p.z = p1.z + mu * (p2.z - p1.z);
@@ -47,19 +45,19 @@ Vertex VertexInterp(double isolevel, Vertex p1, Vertex p2, double valp1, double 
     return(p);
 }
 
-void reconstructCube(Gridcell grid, double isolevel, Triangle* triangles, int* numTriangles) {
+void marchingCubes(Gridcell cell, double isolevel, Triangle* triangles, int* numTriangles) {
     int cubeIndex = 0;
     
     // Busco qué vertices están dentro del cubo
     // y determino el índice en edgeTable
-    if (grid.val[0] < isolevel) cubeIndex |= 1;
-    if (grid.val[1] < isolevel) cubeIndex |= 2;
-    if (grid.val[2] < isolevel) cubeIndex |= 4;
-    if (grid.val[3] < isolevel) cubeIndex |= 8;
-    if (grid.val[4] < isolevel) cubeIndex |= 16;
-    if (grid.val[5] < isolevel) cubeIndex |= 32;
-    if (grid.val[6] < isolevel) cubeIndex |= 64;
-    if (grid.val[7] < isolevel) cubeIndex |= 128;
+    if (cell.val[0] < isolevel) cubeIndex |= 1;
+    if (cell.val[1] < isolevel) cubeIndex |= 2;
+    if (cell.val[2] < isolevel) cubeIndex |= 4;
+    if (cell.val[3] < isolevel) cubeIndex |= 8;
+    if (cell.val[4] < isolevel) cubeIndex |= 16;
+    if (cell.val[5] < isolevel) cubeIndex |= 32;
+    if (cell.val[6] < isolevel) cubeIndex |= 64;
+    if (cell.val[7] < isolevel) cubeIndex |= 128;
 
     // Si no hay ningún vertice dentro del cubo, no hago nada
     if (edgeTable[cubeIndex] == 0) return;
@@ -70,29 +68,29 @@ void reconstructCube(Gridcell grid, double isolevel, Triangle* triangles, int* n
 
     // Escribo los vertices en el arreglo
     if (edge & 1)
-        vertexList[0] = VertexInterp(isolevel, grid.p[0], grid.p[1], grid.val[0], grid.val[1]);
+        vertexList[0] = vertexInterp(isolevel, cell.p[0], cell.p[1], cell.val[0], cell.val[1]);
     if (edge & 2)
-        vertexList[1] = VertexInterp(isolevel, grid.p[1], grid.p[2], grid.val[1], grid.val[2]);
+        vertexList[1] = vertexInterp(isolevel, cell.p[1], cell.p[2], cell.val[1], cell.val[2]);
     if (edge & 4)
-        vertexList[2] = VertexInterp(isolevel, grid.p[2], grid.p[3], grid.val[2], grid.val[3]);
+        vertexList[2] = vertexInterp(isolevel, cell.p[2], cell.p[3], cell.val[2], cell.val[3]);
     if (edge & 8)
-        vertexList[3] = VertexInterp(isolevel, grid.p[3], grid.p[0], grid.val[3], grid.val[0]);
+        vertexList[3] = vertexInterp(isolevel, cell.p[3], cell.p[0], cell.val[3], cell.val[0]);
     if (edge & 16)
-        vertexList[4] = VertexInterp(isolevel, grid.p[4], grid.p[5], grid.val[4], grid.val[5]);
+        vertexList[4] = vertexInterp(isolevel, cell.p[4], cell.p[5], cell.val[4], cell.val[5]);
     if (edge & 32)
-        vertexList[5] = VertexInterp(isolevel, grid.p[5], grid.p[6], grid.val[5], grid.val[6]);
+        vertexList[5] = vertexInterp(isolevel, cell.p[5], cell.p[6], cell.val[5], cell.val[6]);
     if (edge & 64)
-        vertexList[6] = VertexInterp(isolevel, grid.p[6], grid.p[7], grid.val[6], grid.val[7]);
+        vertexList[6] = vertexInterp(isolevel, cell.p[6], cell.p[7], cell.val[6], cell.val[7]);
     if (edge & 128)
-        vertexList[7] = VertexInterp(isolevel, grid.p[7], grid.p[4], grid.val[7], grid.val[4]);
+        vertexList[7] = vertexInterp(isolevel, cell.p[7], cell.p[4], cell.val[7], cell.val[4]);
     if (edge & 256)
-        vertexList[8] = VertexInterp(isolevel, grid.p[0], grid.p[4], grid.val[0], grid.val[4]);
+        vertexList[8] = vertexInterp(isolevel, cell.p[0], cell.p[4], cell.val[0], cell.val[4]);
     if (edge & 512)
-        vertexList[9] = VertexInterp(isolevel, grid.p[1], grid.p[5], grid.val[1], grid.val[5]);
+        vertexList[9] = vertexInterp(isolevel, cell.p[1], cell.p[5], cell.val[1], cell.val[5]);
     if (edge & 1024)
-        vertexList[10] = VertexInterp(isolevel, grid.p[2], grid.p[6], grid.val[2], grid.val[6]);
+        vertexList[10] = vertexInterp(isolevel, cell.p[2], cell.p[6], cell.val[2], cell.val[6]);
     if (edge & 2048)
-        vertexList[11] = VertexInterp(isolevel, grid.p[3], grid.p[7], grid.val[3], grid.val[7]);
+        vertexList[11] = vertexInterp(isolevel, cell.p[3], cell.p[7], cell.val[3], cell.val[7]);
 
     // Genero los triangulos
     for (int i = 0; triTable[cubeIndex][i] != -1; i += 3) {
@@ -104,22 +102,78 @@ void reconstructCube(Gridcell grid, double isolevel, Triangle* triangles, int* n
 }
 
 int main() {
-    const int minX = 0, minY = 0, maxX = 100, maxY = 100;
+        const int min = 0, max = 100;
     const double isolevel = 0.0;
 
-    vector<vector<vector<float>>> grid;
-    grid.resize(maxX - minX);
-    for (int x = 0; x < maxX - minX; x++) {
-        grid[x].resize(maxY - minY);
-        for (int y = 0; y < maxY - minY; y++) {
-            grid[x][y].resize(maxY - minY);
-            for (int z = 0; z < maxY - minY; z++) {
-                grid[x][y][z] = rand();
+    vector<vector<vector<float>>> pointCloud;
+    pointCloud.resize(max - min);
+    for (int x = 0; x < max - min; x++) {
+        pointCloud[x].resize(max - min);
+        for (int y = 0; y < max - min; y++) {
+            pointCloud[x][y].resize(max - min);
+            for (int z = 0; z < max - min; z++) {
+                pointCloud[x][y][z] = rand();
             }
         }
     }
-    
-    
 
+    int numTriangles = 0;
+    Triangle* triangles = new Triangle[(max - min) * (max - min) * (max - min)];
+
+    for (int x = 0; x < max - min; x++) {
+        for (int y = 0; y < max - min; y++) {
+            for (int z = 0; z < max - min; z++) {
+                Gridcell cell;
+                cell.p[0].x = x;
+                cell.p[0].y = y;
+                cell.p[0].z = z;
+                cell.p[1].x = x + 1;
+                cell.p[1].y = y;
+                cell.p[1].z = z;
+                cell.p[2].x = x + 1;
+                cell.p[2].y = y;
+                cell.p[2].z = z + 1;
+                cell.p[3].x = x;
+                cell.p[3].y = y;
+                cell.p[3].z = z + 1;
+                cell.p[4].x = x;
+                cell.p[4].y = y + 1;
+                cell.p[4].z = z;
+                cell.p[5].x = x + 1;
+                cell.p[5].y = y + 1;
+                cell.p[5].z = z;
+                cell.p[6].x = x + 1;
+                cell.p[6].y = y + 1;
+                cell.p[6].z = z + 1;
+                cell.p[7].x = x;
+                cell.p[7].y = y + 1;
+                cell.p[7].z = z + 1;
+                cell.val[0] = pointCloud[x][y][z];
+                cell.val[1] = pointCloud[x + 1][y][z];
+                cell.val[2] = pointCloud[x + 1][y][z + 1];
+                cell.val[3] = pointCloud[x][y][z + 1];
+                cell.val[4] = pointCloud[x][y + 1][z];
+                cell.val[5] = pointCloud[x + 1][y + 1][z];
+                cell.val[6] = pointCloud[x + 1][y + 1][z + 1];
+                cell.val[7] = pointCloud[x][y + 1][z + 1];
+                marchingCubes(cell, isolevel, triangles, &numTriangles);
+            }
+        }
+    }
+
+    // Escribo los triangulos en un arreglo de floats
+    float* trianglesArray = new float[numTriangles * 9];
+    for (int i = 0; i < numTriangles; i++) {
+        trianglesArray[i * 9 + 0] = triangles[i].p[0].x;
+        trianglesArray[i * 9 + 1] = triangles[i].p[0].y;
+        trianglesArray[i * 9 + 2] = triangles[i].p[0].z;
+        trianglesArray[i * 9 + 3] = triangles[i].p[1].x;
+        trianglesArray[i * 9 + 4] = triangles[i].p[1].y;
+        trianglesArray[i * 9 + 5] = triangles[i].p[1].z;
+        trianglesArray[i * 9 + 6] = triangles[i].p[2].x;
+        trianglesArray[i * 9 + 7] = triangles[i].p[2].y;
+        trianglesArray[i * 9 + 8] = triangles[i].p[2].z;
+    }
+    
     return 0;
 }
