@@ -2,7 +2,7 @@ importScripts("Native.js");
 
 console.log("Worker ready");
 
-function generate_chunk(x, y, z, params) {
+function generate_chunk(x, y, z, params, validIndex) {
     // alocar memoria de antemano
     let vertAddress = Module._malloc(80000000 * 10);
     let normAddress = Module._malloc(80000000 * 10);
@@ -24,13 +24,14 @@ function generate_chunk(x, y, z, params) {
         z: z,
         vertBuffer,
         normBuffer,
+        validIndex
     };
 }
 
 self.onmessage = (ev) => {
     const data = ev.data;
     console.time("generate_chunk");
-    const result = generate_chunk(data.x, data.y, data.z, data.params);
+    const result = generate_chunk(data.x, data.y, data.z, data.params, data.validIndex);
     console.timeEnd("generate_chunk");
     self.postMessage(result);
 };

@@ -24,15 +24,14 @@ gui.add(terrain_params, "isolevel", 0, 1).onChange(invalidateAllChunks);
 const renderer = new Renderer(canvas, gl);
 const worker = new Worker("WebWorker.js");
 let chunks = [];
+let validIndex = 1; // los chunks con este indice son validos
 let working = false; // si el worker esta trabajando
 let screenDirty = true; // si hay que volver a dibujar
 
 // marca todos los chunks como invalidos, hay que volver a generarlos
 function invalidateAllChunks() {
     // marcar existentes como invalidos
-    for(const chunk of chunks) {
-        chunk.valid = false;
-    }
+    validIndex++;
     // sacar los que estan fuera del render distance
     chunks = chunks.filter(chunk => chunk.d < terrain_params.render_distance);
     // crear los que faltan (no es muy elegante, pero it works)
@@ -46,7 +45,7 @@ function invalidateAllChunks() {
                         y,
                         z,
                         d: Math.min(Math.min(Math.abs(x), Math.abs(y)), Math.abs(z)),
-                        valid: false,
+                        validIndex: 0,
                     });
                 }
             }
@@ -60,7 +59,7 @@ function nextChunk() {
     if(working) return;
 
     // busco el chunk invalido mas cercano al origen
-    const closest = chunks.filter(chunk => !chunk.valid).sort((a, b) => a.d - b.d);
+    const closest = chunks.filter(chunk => chunk.validIndex !== validIndex).sort((a, b) => a.d - b.d);
     if(closest.length === 0) return;
     const chunk = closest[0];
 
@@ -71,7 +70,8 @@ function nextChunk() {
         params: [
             terrain_params.size,
             terrain_params.isolevel,
-        ]
+        ],
+        validIndex: validIndex,
     });
     working = true;
 }
@@ -79,7 +79,7 @@ function nextChunk() {
 // invocado luego de que un chunk esta listo
 function chunkReady(result) {
     const chunk = chunks.find(chunk => chunk.x === result.x && chunk.y === result.y && chunk.z === result.z);
-    chunk.valid = true;
+    chunk.validIndex = result.validIndex;
     if(chunk.mesh) {
         // limpiar el mesh anterior
         chunk.mesh.destroy();
