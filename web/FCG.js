@@ -22,6 +22,7 @@ gui.add(terrain_params, "size", 10, 50).onChange(invalidateAllChunks);
 gui.add(terrain_params, "isolevel", 0, 1).onChange(invalidateAllChunks);
 
 const renderer = new Renderer(canvas, gl);
+const boxdrawer = new BoxDrawer(gl);
 const worker = new Worker("WebWorker.js");
 let chunks = [];
 let validIndex = 1; // los chunks con este indice son validos
@@ -44,7 +45,7 @@ function invalidateAllChunks() {
                         x,
                         y,
                         z,
-                        d: Math.min(Math.min(Math.abs(x), Math.abs(y)), Math.abs(z)),
+                        d: Math.max(Math.max(Math.abs(x), Math.abs(y)), Math.abs(z)),
                         validIndex: 0,
                     });
                 }
@@ -106,9 +107,12 @@ function frame() {
             if(chunk.mesh) {
                 const ModelMatrix = TranslationMatrix(2*chunk.x, 2*chunk.y, 2*chunk.z);
                 const MVP = MatrixMult(CamMatrix, ModelMatrix);
-                renderer.draw(MVP, [chunk.mesh]);
+                renderer.drawMesh(MVP, chunk.mesh);
             }
         }
+
+        const S = (terrain_params.render_distance - 1) * 2 + 1;
+        boxdrawer.draw(MatrixMult(CamMatrix, ScaleMatrix(S, S, S)));
 
         screenDirty = false;
     }

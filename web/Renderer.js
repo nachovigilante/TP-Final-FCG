@@ -3,7 +3,6 @@ class Renderer {
         this.canvas = canvas;
         this.gl = gl;
 
-        this.boxdrawer = new BoxDrawer(gl);
         this.init();
     }
 
@@ -29,18 +28,14 @@ class Renderer {
         gl.viewport(0, 0, canvas.width, canvas.height);
     }
 
-    draw(matrixMVP, meshes) {
+    drawMesh(matrixMVP, mesh) {
         const { canvas, gl } = this;
 
         gl.useProgram(this.prog);
         gl.uniformMatrix4fv(this.mvp, false, matrixMVP);
         
-        for (const mesh of meshes) {
-            mesh.prepare(this.prog);
-            mesh.draw();
-        }
-
-        //this.boxdrawer.draw(matrixMVP);
+        mesh.prepare(this.prog);
+        mesh.draw();
     }
 }
 
