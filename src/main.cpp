@@ -6,6 +6,21 @@
 
 using namespace std;
 
+typedef struct {
+    int x;
+    int y;
+    int z;
+} Vertex;
+
+typedef struct {
+   Vertex p[3];
+} Triangle;
+
+typedef struct {
+   Vertex p[8];
+   double val[8];
+} Gridcell;
+
 extern "C" {
     int generate(float* trianglesArray, float param1) {
         const int min = 0, max = 100;
@@ -83,21 +98,6 @@ extern "C" {
         return numTriangles * 3;
     }
 }
-
-typedef struct {
-    int x;
-    int y;
-    int z;
-} Vertex;
-
-typedef struct {
-   Vertex p[3];
-} Triangle;
-
-typedef struct {
-   Vertex p[8];
-   double val[8];
-} Gridcell;
 
 Vertex vertexInterp(double isolevel, Vertex p1, Vertex p2, double v1, double v2){
     double mu;
