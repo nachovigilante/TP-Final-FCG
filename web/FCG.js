@@ -107,7 +107,7 @@ function frame() {
             if(chunk.mesh) {
                 const ModelMatrix = TranslationMatrix(2*chunk.x, 2*chunk.y, 2*chunk.z);
                 const MVP = MatrixMult(CamMatrix, ModelMatrix);
-                renderer.drawMesh(MVP, chunk.mesh);
+                renderer.drawMesh(MVP, chunk.mesh, chunk.validIndex !== validIndex);
             }
         }
 

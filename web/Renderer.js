@@ -14,7 +14,8 @@ class Renderer {
         this.prog = InitShaderProgram(shaderVS, shaderFS, gl);
 
         // uniforms
-        this.mvp = gl.getUniformLocation(this.prog, "mvp");
+        this.mvp_loc = gl.getUniformLocation(this.prog, "mvp");
+        this.invalid_loc = gl.getUniformLocation(this.prog, "invalid");
 
         // attributes
         this.pos = gl.getAttribLocation(this.prog, "pos");
@@ -28,11 +29,12 @@ class Renderer {
         gl.viewport(0, 0, canvas.width, canvas.height);
     }
 
-    drawMesh(matrixMVP, mesh) {
+    drawMesh(matrixMVP, mesh, invalid) {
         const { canvas, gl } = this;
 
         gl.useProgram(this.prog);
-        gl.uniformMatrix4fv(this.mvp, false, matrixMVP);
+        gl.uniformMatrix4fv(this.mvp_loc, false, matrixMVP);
+        gl.uniform1f(this.invalid_loc, invalid ? 1 : 0);
         
         mesh.prepare(this.prog);
         mesh.draw();
@@ -68,9 +70,14 @@ varying vec2 texCoord;
 varying vec3 normCoord;
 varying vec4 vertCoord;
 
+uniform float invalid;
+
 void main()
 {
     vec3 C = normCoord;
+    if(invalid > 0.5) {
+        C *= 0.2;
+    }
     gl_FragColor = vec4(C, 1.0);
 }
 `;
