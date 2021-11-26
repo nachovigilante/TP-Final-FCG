@@ -173,78 +173,9 @@ extern "C" {
 }
 
 int main() {
-    const int min = 0, max = 100;
-    const float isolevel = 0.0;
-
-    vector<vector<vector<float>>> pointCloud;
-    pointCloud.resize(max - min);
-    for (int x = 0; x < max - min; x++) {
-        pointCloud[x].resize(max - min);
-        for (int y = 0; y < max - min; y++) {
-            pointCloud[x][y].resize(max - min);
-            for (int z = 0; z < max - min; z++) {
-                pointCloud[x][y][z] = rand();
-            }
-        }
-    }
-
-    int numTriangles = 0;
-    Triangle* triangles = new Triangle[(max - min) * (max - min) * (max - min)];
-
-    for (int x = 0; x < max - min; x++) {
-        for (int y = 0; y < max - min; y++) {
-            for (int z = 0; z < max - min; z++) {
-                Gridcell cell;
-                cell.p[0].x = x;
-                cell.p[0].y = y;
-                cell.p[0].z = z;
-                cell.p[1].x = x + 1;
-                cell.p[1].y = y;
-                cell.p[1].z = z;
-                cell.p[2].x = x + 1;
-                cell.p[2].y = y;
-                cell.p[2].z = z + 1;
-                cell.p[3].x = x;
-                cell.p[3].y = y;
-                cell.p[3].z = z + 1;
-                cell.p[4].x = x;
-                cell.p[4].y = y + 1;
-                cell.p[4].z = z;
-                cell.p[5].x = x + 1;
-                cell.p[5].y = y + 1;
-                cell.p[5].z = z;
-                cell.p[6].x = x + 1;
-                cell.p[6].y = y + 1;
-                cell.p[6].z = z + 1;
-                cell.p[7].x = x;
-                cell.p[7].y = y + 1;
-                cell.p[7].z = z + 1;
-                cell.val[0] = pointCloud[x][y][z];
-                cell.val[1] = pointCloud[x + 1][y][z];
-                cell.val[2] = pointCloud[x + 1][y][z + 1];
-                cell.val[3] = pointCloud[x][y][z + 1];
-                cell.val[4] = pointCloud[x][y + 1][z];
-                cell.val[5] = pointCloud[x + 1][y + 1][z];
-                cell.val[6] = pointCloud[x + 1][y + 1][z + 1];
-                cell.val[7] = pointCloud[x][y + 1][z + 1];
-                marchingCubes(cell, isolevel, triangles, &numTriangles);
-            }
-        }
-    }
-
-    // Escribo los triangulos en un arreglo de floats
-    float* trianglesArray = new float[numTriangles * 9];
-    for (int i = 0; i < numTriangles; i++) {
-        trianglesArray[i * 9 + 0] = triangles[i].p[0].x;
-        trianglesArray[i * 9 + 1] = triangles[i].p[0].y;
-        trianglesArray[i * 9 + 2] = triangles[i].p[0].z;
-        trianglesArray[i * 9 + 3] = triangles[i].p[1].x;
-        trianglesArray[i * 9 + 4] = triangles[i].p[1].y;
-        trianglesArray[i * 9 + 5] = triangles[i].p[1].z;
-        trianglesArray[i * 9 + 6] = triangles[i].p[2].x;
-        trianglesArray[i * 9 + 7] = triangles[i].p[2].y;
-        trianglesArray[i * 9 + 8] = triangles[i].p[2].z;
-    }
+    float trianglesArray[100 * 100 * 100 * 9];
+    int numTriangles = generate(trianglesArray, 0.0);
+    cout << "Numero de triangulos: " << numTriangles << endl;
 
     return 0;
 }
