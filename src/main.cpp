@@ -21,13 +21,22 @@ inline Vertex vertexInterp(const float isolevel, const Vertex& p1, const  Vertex
 }
 
 extern "C" {
-    int generate_mesh(Vertex* vertArray, Vertex* normArray, const int CHUNK_X, const int CHUNK_Y, const int CHUNK_Z, const int SIZE, const float isolevel, const float frequency, const int octaves, const float lacunarity, const float gain) {
-        FastNoiseLite noise;
-        noise.SetNoiseType(FastNoiseLite::NoiseType::NoiseType_Perlin);
-        noise.SetFrequency(frequency);
-        noise.SetFractalOctaves(octaves);
-        noise.SetFractalLacunarity(lacunarity);
-        noise.SetFractalGain(gain);
+    int generate_mesh(Vertex* vertArray, Vertex* normArray, const int CHUNK_X, const int CHUNK_Y, const int CHUNK_Z, const int SIZE, const float isolevel, const float frequency, const int octaves, const float lacunarity, const float gain, const int seed) {
+        FastNoiseLite perlinNoise;
+        perlinNoise.SetSeed(seed);
+        perlinNoise.SetNoiseType(FastNoiseLite::NoiseType::NoiseType_Perlin);
+        perlinNoise.SetFrequency(frequency);
+        perlinNoise.SetFractalOctaves(octaves);
+        perlinNoise.SetFractalLacunarity(lacunarity);
+        perlinNoise.SetFractalGain(gain);
+
+        FastNoiseLite cellularNoise;
+        cellularNoise.SetSeed(seed);
+        cellularNoise.SetNoiseType(FastNoiseLite::NoiseType::NoiseType_Cellular);
+        cellularNoise.SetFrequency(frequency);
+        cellularNoise.SetFractalOctaves(octaves);
+        cellularNoise.SetFractalLacunarity(lacunarity);
+        cellularNoise.SetFractalGain(gain);
 
         const float FIXED_BOX_SIZE = 100;
         const int SIZE1 = SIZE + 1;
@@ -41,7 +50,7 @@ extern "C" {
         //            float xx = CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE;
         //            float yy = CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE;
         //            float zz = CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE;
-        //            float val = (noise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
+        //            float val = (perlinNoise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
         //
         //            points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = val;
         //        }
@@ -55,8 +64,8 @@ extern "C" {
         //            float xx = CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE;
         //            float yy = CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE;
         //            float zz = CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE;
-        //            float val = (noise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
-        //            float val2 = (noise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
+        //            float val = (perlinNoise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
+        //            float val2 = (perlinNoise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
         //
         //            points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = y * 0.2 - val * 0.7 - val2 * 0.9;
         //        }
@@ -71,8 +80,8 @@ extern "C" {
                     float yy = CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE;
                     float zz = CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE;
         
-                    float val = (noise.GetNoise(xx, zz) + 1.0f) / 2.0f;
-                    float val2 = (noise.GetNoise(xx, zz) + 1.0f) / 2.0f;
+                    float val = (perlinNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
+                    float val2 = (cellularNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
 
                     points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = y * 0.2 - val * 0.8 - val2 * 0.9;
                 }
@@ -185,7 +194,7 @@ extern "C" {
 int main() {
     Vertex* trianglesArray = (Vertex*)malloc(100 * 100 * 100 * 1000);
     Vertex* normalsArray = (Vertex*)malloc(100 * 100 * 100 * 1000);
-    int numTriangles = generate_mesh(trianglesArray, normalsArray, 0, 0, 0, 100, 0.5, 0.05, 3, 2.0, 0.5);
+    int numTriangles = generate_mesh(trianglesArray, normalsArray, 0, 0, 0, 100, 0.5, 0.05, 3, 2.0, 0.5, 0);
     cout << "Numero de triangulos: " << numTriangles << endl;
 
     return 0;

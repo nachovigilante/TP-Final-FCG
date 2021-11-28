@@ -19,6 +19,7 @@ const terrain_params = {
     octaves: 3,
     lacunarity: 2,
     gain: 0.5,
+    seed: 0,
 };
 
 gui.add(terrain_params, "render_distance", 1, 5).step(1).onChange(invalidateAllChunks);
@@ -28,6 +29,7 @@ gui.add(terrain_params, "frequency", 0, 0.1).onChange(invalidateAllChunks);
 gui.add(terrain_params, "octaves", 0, 10).step(1).onChange(invalidateAllChunks);
 gui.add(terrain_params, "lacunarity", 0, 10).onChange(invalidateAllChunks);
 gui.add(terrain_params, "gain", 0, 1).onChange(invalidateAllChunks);
+gui.add(terrain_params, "seed", 0, 3000).onChange(invalidateAllChunks);
 
 
 const renderer = new Renderer(canvas, gl);
@@ -84,6 +86,7 @@ function nextChunk() {
             terrain_params.octaves,
             terrain_params.lacunarity,
             terrain_params.gain,
+            terrain_params.seed,
         ],
         validIndex: validIndex,
     });
