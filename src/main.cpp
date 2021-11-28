@@ -48,16 +48,33 @@ extern "C" {
         //    }
         //}
 
-        // 1. Generar el terreno
+        // Una forma de generar el terreno
+        //for (int x = 0; x < SIZE1; x++) {
+        //    for (int y = 0; y < SIZE1; y++) {
+        //        for (int z = 0; z < SIZE1; z++) {
+        //            float xx = CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE;
+        //            float yy = CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE;
+        //            float zz = CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE;
+        //            float val = (noise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
+        //            float val2 = (noise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
+        //
+        //            points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = y * 0.2 - val * 0.7 - val2 * 0.9;
+        //        }
+        //    }
+        //}
+
+        // Otra forma de generar el terreno
         for (int x = 0; x < SIZE1; x++) {
             for (int y = 0; y < SIZE1; y++) {
                 for (int z = 0; z < SIZE1; z++) {
                     float xx = CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE;
                     float yy = CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE;
                     float zz = CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE;
-                    float val = (noise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
         
-                    points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = y * 0.2 - val * 0.5;
+                    float val = noise.GetNoise(CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE, CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE);
+                    float val2 = noise.GetNoise(CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE, CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE);
+
+                    points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = y * 0.2 - val * 0.8 - val2 * 0.9;
                 }
             }
         }
