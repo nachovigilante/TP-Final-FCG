@@ -54,9 +54,21 @@ extern "C" {
                     float terrainPerlinNoise = (perlinNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
                     float terrainCellularNoise = (cellularNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
                     float valCave = caveNoise;
-                    float valTerrain = y - terrainPerlinNoise * SIZE * 0.3 - terrainCellularNoise * SIZE * 0.2 - SIZE * 0.6;
+                    float valTerrain = - terrainPerlinNoise * 0.3 - terrainCellularNoise * 0.2;
 
-                    float val = valCave * 0.5 + valTerrain * 0.5;
+                    valTerrain = yy + 20 + valTerrain * 200.0f;
+
+                    float t = min(1.0f, max(0.0f, yy / 30.0f));
+
+                    float a = max(0.0f, min(1.0f, valTerrain));
+                    float b = 0.7f;
+                    float c = caveNoise;
+
+                    // cuadratic bezier
+                    //float val = a * t * t + b * 2 * t * (1.0f - t) + c * (1.0f - t) * (1.0f - t);
+
+                    float val = (1.0f - a) * caveNoise;
+
 
                     points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = val;
                 }
@@ -158,7 +170,7 @@ extern "C" {
                         const Vertex& a = vertexList[triTable[cubeIndex][i]];
                         const Vertex& b = vertexList[triTable[cubeIndex][i + 1]];
                         const Vertex& c = vertexList[triTable[cubeIndex][i + 2]];
-                        const Vertex normal = normalize(crossProduct(b - a, c - a));
+                        const Vertex normal = normalize(crossProduct(c - a, b - a));
 
                         normArray[numVertex] = normal;
                         vertArray[numVertex++] = a;
