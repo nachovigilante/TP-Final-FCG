@@ -2,6 +2,7 @@
 #include <vector>
 #include "FastNoiseLite.h"
 #include "vertex.h"
+#include "color.h"
 #include "triangulation.h"
 
 using namespace std;
@@ -20,8 +21,49 @@ inline Vertex vertexInterp(const float isolevel, const Vertex& p1, const  Vertex
     };
 }
 
+float clamp(float x, float min, float max) {
+    return x < min ? min : (x > max ? max : x);
+}
+float mix(float x, float y, float a) {
+    return x * (1 - a) + y * a;
+}
+float opSmoothUnion(float d1, float d2, float k) {
+    float h = clamp( 0.5 + 0.5*(d2-d1)/k, 0.0, 1.0 );
+    return mix( d2, d1, h ) - k*h*(1.0-h);
+}
+
+Color colorize(float xx, float yy, float zz) {
+    if(yy > 135) {
+        return {1, 1, 1, 1};
+    } else if(yy > 120) {
+        // brown
+        return {0.5, 0.25, 0, 1};
+    } else if(yy > 105) {
+        // darker brown
+        return {0.25, 0.125, 0, 1};
+    } else if(yy > 90) {
+        // dark green
+        return {0, 0.5, 0, 1};
+    } else if(yy > 75) {
+        // green
+        return {0, 1, 0, 1};
+    } else if(yy > 60) {
+        // light green
+        return {0, 1, 0.5, 1};
+    } else if(yy > 45) {
+        // dark brown
+        return {0.5, 0.25, 0, 1};
+    } else if(yy > 35) {
+        // darker brown
+        return {0.25, 0.125, 0, 1};
+    } else {
+        // even more darker brown
+        return {0.125, 0.0625, 0, 1};
+    }
+}
+
 extern "C" {
-    int generate_mesh(Vertex* vertArray, Vertex* normArray, const int CHUNK_X, const int CHUNK_Y, const int CHUNK_Z, const int SIZE, const float isolevel, const int seed, const float multiplier, const int num_noises, const float* params) {
+    int generate_mesh(Vertex* vertArray, Vertex* normArray, Color* colorArray, const int CHUNK_X, const int CHUNK_Y, const int CHUNK_Z, const int SIZE, const float isolevel, const int seed, const float multiplier, const int num_noises, const float* params) {
         vector<FastNoiseLite> noises(num_noises);
 
         for(int i = 0; i < num_noises; i++) {
@@ -38,6 +80,7 @@ extern "C" {
         }
 
         const float FIXED_BOX_SIZE = 100;
+        const float OFFSET_Y_WORLD = FIXED_BOX_SIZE * 2;
         const int SIZE1 = SIZE + 1;
         const int CELLS = SIZE1 * SIZE1 * SIZE1;
         float* points = (float*)malloc(CELLS * sizeof(float));
@@ -49,6 +92,9 @@ extern "C" {
                     float xx = CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE;
                     float yy = CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE;
                     float zz = CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE;
+
+                    yy -= OFFSET_Y_WORLD;
+
                     //float caveNoise = (perlinNoise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
                     //float terrainPerlinNoise = (perlinNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
                     //float terrainCellularNoise = (cellularNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
@@ -70,7 +116,7 @@ extern "C" {
                         const float* params_offset = params + i * 7;
                         coeff += noise.GetNoise(xx, zz) * params_offset[6];
                     }
-                    float a = clamp((coeff * multiplier - yy) / multiplier,0, 1);
+                    float a = clamp(coeff - yy / multiplier, 0, 1);
 
                     // cave noise
                     float caveNoise = (noises[0].GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
@@ -178,12 +224,23 @@ extern "C" {
                         const Vertex& b = vertexList[triTable[cubeIndex][i + 1]];
                         const Vertex& c = vertexList[triTable[cubeIndex][i + 2]];
                         const Vertex normal = normalize(crossProduct(c - a, b - a));
+                        
+                        const Color color = colorize(
+                            CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE,
+                            CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE,
+                            CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE
+                        );
 
                         normArray[numVertex] = normal;
+                        colorArray[numVertex] = color;
                         vertArray[numVertex++] = a;
+
                         normArray[numVertex] = normal;
+                        colorArray[numVertex] = color;
                         vertArray[numVertex++] = b;
+
                         normArray[numVertex] = normal;
+                        colorArray[numVertex] = color;
                         vertArray[numVertex++] = c;
                     }
                 }

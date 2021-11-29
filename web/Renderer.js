@@ -49,18 +49,21 @@ precision mediump float;
 attribute vec3 pos;
 attribute vec3 normal;
 attribute vec2 uv;
+attribute vec4 color;
 
 uniform mat4 mvp;
 
 varying vec2 texCoord;
 varying vec3 normCoord;
 varying vec4 vertCoord;
+varying vec4 colCoord;
 
 void main()
 {
     texCoord = uv;
     normCoord = normal;
-    vertCoord = vec4(pos, 1.0);
+    vertCoord = mvp * vec4(pos,1.0);
+    colCoord = color;
     gl_Position = mvp * vec4(pos,1.0);
 }
 `;
@@ -71,15 +74,30 @@ precision mediump float;
 varying vec2 texCoord;
 varying vec3 normCoord;
 varying vec4 vertCoord;
+varying vec4 colCoord;
 
 uniform float invalid;
 
 void main()
 {
-    vec3 C = normCoord;
-    if(invalid > 0.5) {
-        // C *= 0.2;
-    }
+    vec3 l = normalize(vec3(0.5, 0.3, 0.2));
+    vec3 v = normalize(vertCoord.xyz);
+    vec3 n = normCoord;
+    
+    float cosTita = dot(n, l);
+    vec3 r = 2.0 * cosTita * n - l;
+    float cosSigma = dot(r, v);
+
+    vec3 Kdif = colCoord.rgb;
+    vec3 Kspec = vec3(1.0);
+    vec3 Kamb = Kdif;
+    vec3 I = vec3(1.0);
+    float Ia = 0.08;
+
+    vec3 C = vec3(0.0);
+    C += I * max(0.0, cosTita) * Kdif;
+    C += Ia * Kamb;
+
     gl_FragColor = vec4(C, 1.0);
 }
 `;

@@ -44,7 +44,7 @@ function addNoise(gui, object) {
     terrain_params.noises.push(object);
 }
 
-gui.add(terrain_params, "render_distance", 1, 5).step(1).onChange(invalidateAllChunks);
+gui.add(terrain_params, "render_distance", 2, 5).step(1).onChange(invalidateAllChunks);
 gui.add(terrain_params, "size", 10, 50).onChange(invalidateAllChunks);
 gui.add(terrain_params, "isolevel", 0, 1).onChange(invalidateAllChunks);
 gui.add(terrain_params, "seed", 0, 3000).onChange(invalidateAllChunks);
@@ -162,7 +162,7 @@ function chunkReady(result) {
             // limpiar el mesh anterior
             chunk.mesh.destroy();
         }
-        chunk.mesh = new Mesh(result.vertBuffer, result.normBuffer, renderer.gl);
+        chunk.mesh = new Mesh(result.vertBuffer, result.normBuffer, result.colorBuffer, renderer.gl);
         screenDirty = true;
     }
     working = false;
