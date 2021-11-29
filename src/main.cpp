@@ -43,23 +43,6 @@ extern "C" {
         const int CELLS = SIZE1 * SIZE1 * SIZE1;
         float* points = (float*)malloc(CELLS * sizeof(float));
 
-        // 2. Generar el terreno
-        for (int x = 0; x < SIZE1; x++) {
-            for (int y = SIZE1 * 0.6; y < SIZE1; y++) {
-                for (int z = 0; z < SIZE1; z++) {
-                    float xx = CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE;
-                    float yy = CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE;
-                    float zz = CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE;
-        
-                    //float val = (perlinNoise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
-                    float val = (perlinNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
-                    float val2 = (cellularNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
-        
-                    points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = y - val * SIZE * 0.3 - val2 * SIZE * 0.2 - SIZE * 0.6;
-                }
-            }
-        }
-
         // 1. Generar las cuevas
         for (int x = 0; x < SIZE1; x++) {
             for (int y = 0; y < SIZE1; y++) {
@@ -67,17 +50,35 @@ extern "C" {
                     float xx = CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE;
                     float yy = CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE;
                     float zz = CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE;
-                    float val = (perlinNoise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
+                    float caveNoise = (perlinNoise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
+                    float terrainPerlinNoise = (perlinNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
+                    float terrainCellularNoise = (cellularNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
+                    float valCave = caveNoise;
+                    float valTerrain = y - terrainPerlinNoise * SIZE * 0.3 - terrainCellularNoise * SIZE * 0.2 - SIZE * 0.6;
 
-                    if(y >= SIZE1 * 0.6) {
-                        points[x * SIZE1 * SIZE1 + y * SIZE1 + z] += val * SIZE * 0.2;
-                    }else{
-                        points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = val;
-                    }
+                    float val = valCave * 0.5 + valTerrain * 0.5;
 
+                    points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = val;
                 }
             }
         }
+
+        // 2. Generar el terreno
+        //for (int x = 0; x < SIZE1; x++) {
+        //    for (int y = SIZE1 * 0.6; y < SIZE1; y++) {
+        //        for (int z = 0; z < SIZE1; z++) {
+        //            float xx = CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE;
+        //            float yy = CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE;
+        //            float zz = CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE;
+        //
+        //            //float val = (perlinNoise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
+        //            float val = (perlinNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
+        //            float val2 = (cellularNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
+        //            
+        //            points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = y - val * SIZE * 0.3 - val2 * SIZE * 0.2 - SIZE * 0.6;
+        //        }
+        //    }
+        //}
 
         int numVertex = 0;
         float val[8];
