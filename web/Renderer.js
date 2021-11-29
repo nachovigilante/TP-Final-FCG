@@ -9,6 +9,8 @@ class Renderer {
     init() {
         gl.clearColor(0, 0, 0, 0);
         gl.enable(gl.DEPTH_TEST);
+        gl.enable(gl.CULL_FACE);
+        gl.cullFace(gl.BACK);
         this.resize();
 
         this.prog = InitShaderProgram(shaderVS, shaderFS, gl);

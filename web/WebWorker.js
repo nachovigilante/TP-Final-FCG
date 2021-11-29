@@ -2,13 +2,15 @@ importScripts("Native.js");
 
 console.log("Worker ready");
 
-function generate_chunk(x, y, z, params, validIndex) {
+function generate_chunk(x, y, z, params, noise_params, validIndex) {
     // alocar memoria de antemano
     let vertAddress = Module._malloc(80000000 * 10);
     let normAddress = Module._malloc(80000000 * 10);
+    let noiseParams = Module._malloc(1000 * 4);
+    Module.HEAPF32.set(noise_params, noiseParams / 4);
 
     // generar
-    let numVerts = Module._generate_mesh(vertAddress, normAddress, x, y, z, ...params);
+    let numVerts = Module._generate_mesh(vertAddress, normAddress, x, y, z, ...params, noiseParams);
 
     // extraer buffers
     let vertBuffer = Module.HEAPF32.slice(vertAddress / 4, vertAddress / 4 + numVerts * 3);
@@ -17,6 +19,7 @@ function generate_chunk(x, y, z, params, validIndex) {
     // liberar
     Module._free(vertAddress);
     Module._free(normAddress);
+    Module._free(noiseParams);
 
     return {
         x: x,
@@ -31,7 +34,7 @@ function generate_chunk(x, y, z, params, validIndex) {
 self.onmessage = (ev) => {
     const data = ev.data;
     console.time("generate_chunk");
-    const result = generate_chunk(data.x, data.y, data.z, data.params, data.validIndex);
+    const result = generate_chunk(data.x, data.y, data.z, data.params, data.noise_params, data.validIndex);
     console.timeEnd("generate_chunk");
     self.postMessage(result);
 };

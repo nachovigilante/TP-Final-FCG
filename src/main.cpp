@@ -21,22 +21,21 @@ inline Vertex vertexInterp(const float isolevel, const Vertex& p1, const  Vertex
 }
 
 extern "C" {
-    int generate_mesh(Vertex* vertArray, Vertex* normArray, const int CHUNK_X, const int CHUNK_Y, const int CHUNK_Z, const int SIZE, const float isolevel, const float frequency, const int octaves, const float lacunarity, const float gain, const int seed) {
-        FastNoiseLite perlinNoise;
-        perlinNoise.SetSeed(seed);
-        perlinNoise.SetNoiseType(FastNoiseLite::NoiseType::NoiseType_Perlin);
-        perlinNoise.SetFrequency(frequency);
-        perlinNoise.SetFractalOctaves(octaves);
-        perlinNoise.SetFractalLacunarity(lacunarity);
-        perlinNoise.SetFractalGain(gain);
+    int generate_mesh(Vertex* vertArray, Vertex* normArray, const int CHUNK_X, const int CHUNK_Y, const int CHUNK_Z, const int SIZE, const float isolevel, const int seed, const float multiplier, const int num_noises, const float* params) {
+        vector<FastNoiseLite> noises(num_noises);
 
-        FastNoiseLite cellularNoise;
-        cellularNoise.SetSeed(seed);
-        cellularNoise.SetNoiseType(FastNoiseLite::NoiseType::NoiseType_Cellular);
-        cellularNoise.SetFrequency(frequency);
-        cellularNoise.SetFractalOctaves(octaves);
-        cellularNoise.SetFractalLacunarity(lacunarity);
-        cellularNoise.SetFractalGain(gain);
+        for(int i = 0; i < num_noises; i++) {
+            FastNoiseLite& noise = noises[i];
+            const float* params_offset = params + i * 7;
+
+            noise.SetSeed(seed);
+            noise.SetNoiseType(static_cast<FastNoiseLite::NoiseType>((int)params_offset[0]));
+            noise.SetFractalType(static_cast<FastNoiseLite::FractalType>((int)params_offset[1]));
+            noise.SetFrequency(params_offset[2]);
+            noise.SetFractalOctaves((int)params_offset[3]);
+            noise.SetFractalLacunarity(params_offset[4]);
+            noise.SetFractalGain(params_offset[5]);
+        }
 
         const float FIXED_BOX_SIZE = 100;
         const int SIZE1 = SIZE + 1;
@@ -50,25 +49,33 @@ extern "C" {
                     float xx = CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE;
                     float yy = CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE;
                     float zz = CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE;
-                    float caveNoise = (perlinNoise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
-                    float terrainPerlinNoise = (perlinNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
-                    float terrainCellularNoise = (cellularNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
-                    float valCave = caveNoise;
-                    float valTerrain = - terrainPerlinNoise * 0.3 - terrainCellularNoise * 0.2;
+                    //float caveNoise = (perlinNoise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
+                    //float terrainPerlinNoise = (perlinNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
+                    //float terrainCellularNoise = (cellularNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
+                    //float valCave = caveNoise;
+                    //float valTerrain = terrainPerlinNoise + terrainCellularNoise * 0.5;
 
-                    valTerrain = yy + 20 + valTerrain * 200.0f;
+                    //valTerrain = (yy - 30.0f - valTerrain * 100.0f) / 100.0f;
 
-                    float t = min(1.0f, max(0.0f, yy / 30.0f));
+                    //float a = clamp(valTerrain, 0, 1);
 
-                    float a = max(0.0f, min(1.0f, valTerrain));
-                    float b = 0.7f;
-                    float c = caveNoise;
+                    //float val = (1.0f - a) * caveNoise;
+                    //float t = clamp(yy / 30.0f, 0, 1);
+                    //float val = opSmoothUnion((1.0f - a), caveNoise, 0.75);
+                    //float val = perlinNoise.GetNoise(xx, zz) * 100.0f - yy;
 
-                    // cuadratic bezier
-                    //float val = a * t * t + b * 2 * t * (1.0f - t) + c * (1.0f - t) * (1.0f - t);
+                    float coeff = 0;
+                    for(int i = 1; i < num_noises; i++) {
+                        FastNoiseLite& noise = noises[i];
+                        const float* params_offset = params + i * 7;
+                        coeff += noise.GetNoise(xx, zz) * params_offset[6];
+                    }
+                    float a = clamp((coeff * multiplier - yy) / multiplier,0, 1);
 
-                    float val = (1.0f - a) * caveNoise;
+                    // cave noise
+                    float caveNoise = (noises[0].GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
 
+                    float val = opSmoothUnion(a, caveNoise, 0.75);
 
                     points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = val;
                 }
@@ -198,8 +205,8 @@ extern "C" {
 int main() {
     Vertex* trianglesArray = (Vertex*)malloc(100 * 100 * 100 * 1000);
     Vertex* normalsArray = (Vertex*)malloc(100 * 100 * 100 * 1000);
-    int numTriangles = generate_mesh(trianglesArray, normalsArray, 0, 0, 0, 100, 0.5, 0.05, 3, 2.0, 0.5, 0);
-    cout << "Numero de triangulos: " << numTriangles << endl;
+    /*int numTriangles = generate_mesh(trianglesArray, normalsArray, 0, 0, 0, 100, 0.5, 0.05, 3, 2.0, 0.5, 0);
+    cout << "Numero de triangulos: " << numTriangles << endl;*/
 
     return 0;
 }

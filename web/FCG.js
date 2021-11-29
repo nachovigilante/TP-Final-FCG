@@ -12,24 +12,83 @@ stats.domElement.classList.add("stats");
 document.body.appendChild(stats.domElement);
 
 const terrain_params = {
-    render_distance: 1,
+    render_distance: 3,
     size: 25,
     isolevel: 0.42,
-    frequency: 0.05,
-    octaves: 3,
-    lacunarity: 2,
-    gain: 0.5,
     seed: 0,
+    multiplier: 100,
+    noises: []
 };
+
+function addNoise(gui, object) {
+    gui.add(object, "noiseType", {
+        "OpenSimplex2": 0,
+        "OpenSimplex2S": 1,
+        "Cellular": 2,
+        "Perlin": 3,
+        "ValueCubic": 4,
+        "Value": 5
+    }).onChange(invalidateAllChunks);
+    gui.add(object, "fractalType", {
+        "None": 0,
+        "FBm": 1,
+        "Ridged": 2,
+        "PingPong": 3
+    }).onChange(invalidateAllChunks);
+    gui.add(object, "frequency", 0, 0.05).onChange(invalidateAllChunks);
+    gui.add(object, "octaves", 0, 10).step(1).onChange(invalidateAllChunks);
+    gui.add(object, "lacunarity", 0, 10).onChange(invalidateAllChunks);
+    gui.add(object, "gain", 0, 1).onChange(invalidateAllChunks);
+    gui.add(object, "contribution", 0, 1).onChange(invalidateAllChunks);
+
+    terrain_params.noises.push(object);
+}
 
 gui.add(terrain_params, "render_distance", 1, 5).step(1).onChange(invalidateAllChunks);
 gui.add(terrain_params, "size", 10, 50).onChange(invalidateAllChunks);
 gui.add(terrain_params, "isolevel", 0, 1).onChange(invalidateAllChunks);
-gui.add(terrain_params, "frequency", 0, 0.1).onChange(invalidateAllChunks);
-gui.add(terrain_params, "octaves", 0, 10).step(1).onChange(invalidateAllChunks);
-gui.add(terrain_params, "lacunarity", 0, 10).onChange(invalidateAllChunks);
-gui.add(terrain_params, "gain", 0, 1).onChange(invalidateAllChunks);
 gui.add(terrain_params, "seed", 0, 3000).onChange(invalidateAllChunks);
+gui.add(terrain_params, "multiplier", 50, 200).onChange(invalidateAllChunks);
+
+addNoise(gui.addFolder("Cuevas"), {
+    noiseType: 3,
+    fractalType: 1,
+    frequency: 0.005,
+    octaves: 2,
+    lacunarity: 2.8,
+    gain: 0.35,
+    contribution: 0,
+});
+
+addNoise(gui.addFolder("Base"), {
+    noiseType: 3,
+    fractalType: 1,
+    frequency: 0.0044,
+    octaves: 1,
+    lacunarity: 1.5,
+    gain: 0.42,
+    contribution: 0.5,
+});
+
+addNoise(gui.addFolder("Rugosidad"), {
+    noiseType: 3,
+    fractalType: 1,
+    frequency: 0.013,
+    octaves: 7,
+    lacunarity: 1.5,
+    gain: 0.51,
+    contribution: 0.37,
+});
+
+addNoise(gui.addFolder("Picos"), {
+    noiseType: 2,
+    fractalType: 0,
+    frequency: 0.012,
+    octaves: 0,
+    lacunarity: 0,
+    gain: 0,
+    contribution: 0.3,
+});
 
 
 const renderer = new Renderer(canvas, gl);
@@ -82,12 +141,13 @@ function nextChunk() {
         params: [
             terrain_params.size,
             terrain_params.isolevel,
-            terrain_params.frequency,
-            terrain_params.octaves,
-            terrain_params.lacunarity,
-            terrain_params.gain,
             terrain_params.seed,
+            terrain_params.multiplier,
+            terrain_params.noises.length, // num_noises
         ],
+        noise_params: terrain_params.noises.reduce((acc, noise) => {
+            return [...acc, ...Object.values(noise)];
+        }, []),
         validIndex: validIndex,
     });
     working = true;
