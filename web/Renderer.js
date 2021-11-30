@@ -30,7 +30,7 @@ class Renderer {
         
         this.tex_id=0;
         let img = new Image();
-        img.src = "texture.png";
+        img.src = "terrain.jpg";
         img.onload = () => {
             console.log(img);
 
@@ -118,7 +118,7 @@ void main()
     n = abs(n);
     n /= dot(n, vec3(1.0, 1.0, 1.0));
 
-    vec4 color = texture2D(texGPU, vertCoord.xy) + texture2D(texGPU, vertCoord.xz) + texture2D(texGPU, vertCoord.zy);
+    vec4 color = texture2D(texGPU, vertCoord.xy) * n.z + texture2D(texGPU, vertCoord.xz) * n.y + texture2D(texGPU, vertCoord.zy) * n.x;
 
     vec3 Kdif = color.rgb;
     vec3 Kspec = vec3(1.0);
