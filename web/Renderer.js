@@ -28,19 +28,18 @@ class Renderer {
 
         // textures
         
+        this.tex_id=0;
         let img = new Image();
         img.src = "texture.png";
         img.onload = () => {
             console.log(img);
 
-            gl.bindTexture(gl.TEXTURE_2D,  gl.createTexture());
+            this.tex_id = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, this.tex_id);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-            gl.bindTexture(gl.TEXTURE_2D, null);
 
             gl.generateMipmap( gl.TEXTURE_2D );
-
-            gl.useProgram( this.prog );
-            gl.uniform1i( this.sampler_loc, 0 );
+            console.log("texture loaded");
         };
     }
 
@@ -59,6 +58,10 @@ class Renderer {
         gl.uniformMatrix4fv(this.mvp_loc, false, matrixMVP);
         gl.uniformMatrix4fv(this.m_loc, false, matrixM);
         gl.uniform1f(this.invalid_loc, invalid ? 1 : 0);
+        
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.tex_id);
+        gl.uniform1i(this.sampler_loc,0);
         
         mesh.prepare(this.prog);
         mesh.draw();
