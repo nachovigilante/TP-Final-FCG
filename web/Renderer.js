@@ -120,7 +120,9 @@ void main()
 
     vec4 color = texture2D(texGPU, vertCoord.xy) * n.z + texture2D(texGPU, vertCoord.xz) * n.y + texture2D(texGPU, vertCoord.zy) * n.x;
 
-    vec3 Kdif = color.rgb;
+    
+
+    vec3 Kdif = color.rgb * colCoord.rgb;
     vec3 Kspec = vec3(1.0);
     vec3 Kamb = Kdif;
     vec3 I = vec3(1.0);
