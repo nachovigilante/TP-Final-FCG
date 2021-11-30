@@ -17,10 +17,31 @@ class Renderer {
 
         // uniforms
         this.mvp_loc = gl.getUniformLocation(this.prog, "mvp");
+        this.m_loc = gl.getUniformLocation(this.prog, "m");
         this.invalid_loc = gl.getUniformLocation(this.prog, "invalid");
+        this.sampler_loc = gl.getUniformLocation(this.prog, "texGPU");
 
         // attributes
         this.pos = gl.getAttribLocation(this.prog, "pos");
+        this.uv = gl.getAttribLocation(this.prog, "uv");
+
+
+        // textures
+        
+        let img = new Image();
+        img.src = "texture.png";
+        img.onload = () => {
+            console.log(img);
+
+            gl.bindTexture(gl.TEXTURE_2D,  gl.createTexture());
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+            gl.bindTexture(gl.TEXTURE_2D, null);
+
+            gl.generateMipmap( gl.TEXTURE_2D );
+
+            gl.useProgram( this.prog );
+            gl.uniform1i( this.sampler_loc, 0 );
+        };
     }
 
     resize() {
@@ -31,11 +52,12 @@ class Renderer {
         gl.viewport(0, 0, canvas.width, canvas.height);
     }
 
-    drawMesh(matrixMVP, mesh, invalid) {
+    drawMesh(matrixM, matrixMVP, mesh, invalid) {
         const { canvas, gl } = this;
 
         gl.useProgram(this.prog);
         gl.uniformMatrix4fv(this.mvp_loc, false, matrixMVP);
+        gl.uniformMatrix4fv(this.m_loc, false, matrixM);
         gl.uniform1f(this.invalid_loc, invalid ? 1 : 0);
         
         mesh.prepare(this.prog);
@@ -52,6 +74,7 @@ attribute vec2 uv;
 attribute vec4 color;
 
 uniform mat4 mvp;
+uniform mat4 m;
 
 varying vec2 texCoord;
 varying vec3 normCoord;
@@ -62,7 +85,7 @@ void main()
 {
     texCoord = uv;
     normCoord = normal;
-    vertCoord = mvp * vec4(pos,1.0);
+    vertCoord = m * vec4(pos,1.0);
     colCoord = color;
     gl_Position = mvp * vec4(pos,1.0);
 }
@@ -77,6 +100,7 @@ varying vec4 vertCoord;
 varying vec4 colCoord;
 
 uniform float invalid;
+uniform sampler2D texGPU;
 
 void main()
 {
@@ -88,7 +112,12 @@ void main()
     vec3 r = 2.0 * cosTita * n - l;
     float cosSigma = dot(r, v);
 
-    vec3 Kdif = colCoord.rgb;
+    n = abs(n);
+    n /= dot(n, vec3(1.0, 1.0, 1.0));
+
+    vec4 color = texture2D(texGPU, vertCoord.xy) + texture2D(texGPU, vertCoord.xz) + texture2D(texGPU, vertCoord.zy);
+
+    vec3 Kdif = color.rgb;
     vec3 Kspec = vec3(1.0);
     vec3 Kamb = Kdif;
     vec3 I = vec3(1.0);

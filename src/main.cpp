@@ -33,14 +33,14 @@ float opSmoothUnion(float d1, float d2, float k) {
 }
 
 Color colorize(float xx, float yy, float zz) {
-    if(yy > 135) {
+    if(yy > 140) {
         return {1, 1, 1, 1};
     } else if(yy > 120) {
-        // brown
-        return {0.5, 0.25, 0, 1};
+        // grey
+        return {0.5, 0.5, 0.5, 1};
     } else if(yy > 105) {
-        // darker brown
-        return {0.25, 0.125, 0, 1};
+        // darker grey
+        return {0.25, 0.25, 0.25, 1};
     } else if(yy > 90) {
         // dark green
         return {0, 0.5, 0, 1};
@@ -48,17 +48,17 @@ Color colorize(float xx, float yy, float zz) {
         // green
         return {0, 1, 0, 1};
     } else if(yy > 60) {
-        // light green
-        return {0, 1, 0.5, 1};
+        // light brown
+        return {0.5, 0.25, 0, 1};
     } else if(yy > 45) {
         // dark brown
         return {0.5, 0.25, 0, 1};
-    } else if(yy > 35) {
-        // darker brown
-        return {0.25, 0.125, 0, 1};
+    } else if(yy > 15) {
+        // dark grey
+        return {0.25, 0.25, 0.25, 1};
     } else {
-        // even more darker brown
-        return {0.125, 0.0625, 0, 1};
+        // darker grey
+        return {0.25, 0.25, 0.25, 1};
     }
 }
 
