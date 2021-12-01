@@ -62,8 +62,30 @@ Color colorize(float xx, float yy, float zz) {
     }
 }
 
+float texturize(int yy){
+    if(yy > 140) {
+        return 0;
+    } else if(yy > 120) {
+        return 1;
+    } else if(yy > 105) {
+        return 2;
+    } else if(yy > 90) {
+        return 3;
+    } else if(yy > 75) {
+        return 4;
+    } else if(yy > 60) {
+        return 5;
+    } else if(yy > 45) {
+        return 6;
+    } else if(yy > 15) {
+        return 7;
+    } else {
+        return 8;
+    }
+}
+
 extern "C" {
-    int generate_mesh(Vertex* vertArray, Vertex* normArray, Color* colorArray, const int CHUNK_X, const int CHUNK_Y, const int CHUNK_Z, const int SIZE, const float isolevel, const int seed, const float multiplier, const int num_noises, const float* params) {
+    int generate_mesh(Vertex* vertArray, Vertex* normArray, Color* colorArray, float* textureArray, const int CHUNK_X, const int CHUNK_Y, const int CHUNK_Z, const int SIZE, const float isolevel, const int seed, const float multiplier, const int num_noises, const float* params) {
         vector<FastNoiseLite> noises(num_noises);
 
         for(int i = 0; i < num_noises; i++) {
@@ -231,16 +253,32 @@ extern "C" {
                             CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE
                         );
 
+                        //const float texture = texturize(
+                        //    CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE
+                        //);
+
+                        const float texture[9] = {
+                            1.0f, 0.0f, 0.0f,
+                            0.0f, 0.0f, 0.0f,
+                            0.0f, 0.0f, 3.0f
+                        };
+
                         normArray[numVertex] = normal;
                         colorArray[numVertex] = color;
+                        for(int i = 0; i < 9; i++)
+                            textureArray[numVertex * 9 + i] = texture[i];
                         vertArray[numVertex++] = a;
 
                         normArray[numVertex] = normal;
                         colorArray[numVertex] = color;
+                        for(int i = 0; i < 9; i++)
+                            textureArray[numVertex * 9 + i] = texture[i];
                         vertArray[numVertex++] = b;
 
                         normArray[numVertex] = normal;
                         colorArray[numVertex] = color;
+                        for(int i = 0; i < 9; i++)
+                            textureArray[numVertex * 9 + i] = texture[i];
                         vertArray[numVertex++] = c;
                     }
                 }

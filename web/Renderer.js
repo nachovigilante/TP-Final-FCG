@@ -75,11 +75,13 @@ attribute vec3 pos;
 attribute vec3 normal;
 attribute vec2 uv;
 attribute vec4 color;
+attribute mat3 texture;
 
 uniform mat4 mvp;
 uniform mat4 m;
 
 varying vec2 texCoord;
+varying mat3 texIndex;
 varying vec3 normCoord;
 varying vec4 vertCoord;
 varying vec4 colCoord;
@@ -87,6 +89,7 @@ varying vec4 colCoord;
 void main()
 {
     texCoord = uv;
+    texIndex = texture;
     normCoord = normal;
     vertCoord = m * vec4(pos,1.0);
     colCoord = color;
@@ -98,6 +101,7 @@ const shaderFS = `
 precision mediump float;
 
 varying vec2 texCoord;
+varying mat3 texIndex;
 varying vec3 normCoord;
 varying vec4 vertCoord;
 varying vec4 colCoord;
@@ -121,8 +125,12 @@ void main()
     vec4 color = texture2D(texGPU, vertCoord.xy) * n.z + texture2D(texGPU, vertCoord.xz) * n.y + texture2D(texGPU, vertCoord.zy) * n.x;
 
     
+    vec3 Kdif = color.rgb;
+    
+    if (texIndex[0][0] - 1.0 < 0.0001){
+        Kdif *= colCoord.rgb;
+    }
 
-    vec3 Kdif = color.rgb * colCoord.rgb;
     vec3 Kspec = vec3(1.0);
     vec3 Kamb = Kdif;
     vec3 I = vec3(1.0);

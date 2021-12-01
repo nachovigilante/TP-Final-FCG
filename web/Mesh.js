@@ -1,5 +1,5 @@
 class Mesh {
-    constructor(vertPos, normPos, colorPos, gl) {
+    constructor(vertPos, normPos, colorPos, texPos, gl) {
         this.gl = gl;
         this.numTris = vertPos.length / 3;
 
@@ -14,12 +14,17 @@ class Mesh {
         this.color_buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.color_buffer);
         gl.bufferData(gl.ARRAY_BUFFER, colorPos, gl.STATIC_DRAW);
+
+        this.texture_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.texture_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, texPos, gl.STATIC_DRAW);
     }
 
     destroy() {
         this.gl.deleteBuffer(this.vertex_buffer);
         this.gl.deleteBuffer(this.normal_buffer);
         this.gl.deleteBuffer(this.color_buffer);
+        this.gl.deleteBuffer(this.texture_buffer);
     }
 
     prepare(prog) {
@@ -27,6 +32,7 @@ class Mesh {
 		this.location_pos = this.gl.getAttribLocation(this.prog, 'pos');
 		this.location_normal = this.gl.getAttribLocation(this.prog, 'normal');
         this.location_color = this.gl.getAttribLocation(this.prog, 'color');
+        this.location_tex = this.gl.getAttribLocation(this.prog, 'texture');
     }
 
     draw() {
@@ -45,6 +51,12 @@ class Mesh {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.color_buffer);
         gl.vertexAttribPointer(this.location_color, 4, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(this.location_color);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.texture_buffer);
+        gl.vertexAttribPointer(this.location_tex + 0, 3, gl.FLOAT, false, 36, 0);
+        gl.vertexAttribPointer(this.location_tex + 1, 3, gl.FLOAT, false, 36, 12);
+        gl.vertexAttribPointer(this.location_tex + 2, 3, gl.FLOAT, false, 36, 24);
+        gl.enableVertexAttribArray(this.location_tex);
 
         gl.drawArrays(gl.TRIANGLES, 0, this.numTris);
 

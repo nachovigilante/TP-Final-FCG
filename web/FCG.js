@@ -162,7 +162,7 @@ function chunkReady(result) {
             // limpiar el mesh anterior
             chunk.mesh.destroy();
         }
-        chunk.mesh = new Mesh(result.vertBuffer, result.normBuffer, result.colorBuffer, renderer.gl);
+        chunk.mesh = new Mesh(result.vertBuffer, result.normBuffer, result.colorBuffer, result.texBuffer, renderer.gl);
         screenDirty = true;
     }
     working = false;
