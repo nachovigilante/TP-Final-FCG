@@ -253,32 +253,23 @@ extern "C" {
                             CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE
                         );
 
-                        //const float texture = texturize(
-                        //    CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE
-                        //);
-
-                        const float texture[9] = {
-                            1.0f, 0.0f, 0.0f,
-                            0.0f, 0.0f, 0.0f,
-                            0.0f, 0.0f, 3.0f
-                        };
+                        const float texture = texturize(
+                            CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE
+                        );
 
                         normArray[numVertex] = normal;
                         colorArray[numVertex] = color;
-                        for(int i = 0; i < 9; i++)
-                            textureArray[numVertex * 9 + i] = texture[i];
+                        textureArray[numVertex] = texture;
                         vertArray[numVertex++] = a;
 
                         normArray[numVertex] = normal;
                         colorArray[numVertex] = color;
-                        for(int i = 0; i < 9; i++)
-                            textureArray[numVertex * 9 + i] = texture[i];
+                        textureArray[numVertex] = texture;
                         vertArray[numVertex++] = b;
 
                         normArray[numVertex] = normal;
                         colorArray[numVertex] = color;
-                        for(int i = 0; i < 9; i++)
-                            textureArray[numVertex * 9 + i] = texture[i];
+                        textureArray[numVertex] = texture;
                         vertArray[numVertex++] = c;
                     }
                 }

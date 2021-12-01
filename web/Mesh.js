@@ -53,9 +53,7 @@ class Mesh {
         gl.enableVertexAttribArray(this.location_color);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.texture_buffer);
-        gl.vertexAttribPointer(this.location_tex + 0, 3, gl.FLOAT, false, 36, 0);
-        gl.vertexAttribPointer(this.location_tex + 1, 3, gl.FLOAT, false, 36, 12);
-        gl.vertexAttribPointer(this.location_tex + 2, 3, gl.FLOAT, false, 36, 24);
+        gl.vertexAttribPointer(this.location_tex, 1, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(this.location_tex);
 
         gl.drawArrays(gl.TRIANGLES, 0, this.numTris);

@@ -18,7 +18,7 @@ function generate_chunk(x, y, z, params, noise_params, validIndex) {
     let vertBuffer = Module.HEAPF32.slice(vertAddress / 4, vertAddress / 4 + numVerts * 3);
     let normBuffer = Module.HEAPF32.slice(normAddress / 4, normAddress / 4 + numVerts * 3);
     let colorBuffer = Module.HEAPF32.slice(colorAddress / 4, colorAddress / 4 + numVerts * 4);
-    let texBuffer = Module.HEAPF32.slice(texAddress / 4, texAddress / 4 + numVerts * 9);
+    let texBuffer = Module.HEAPF32.slice(texAddress / 4, texAddress / 4 + numVerts);
 
     // liberar
     Module._free(vertAddress);
