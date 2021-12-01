@@ -11,6 +11,7 @@ class Renderer {
         gl.enable(gl.DEPTH_TEST);
         gl.enable(gl.CULL_FACE);
         gl.cullFace(gl.BACK);
+        gl.getExtension("OES_element_index_uint");
         this.resize();
 
         this.prog = InitShaderProgram(shaderVS, shaderFS, gl);
@@ -166,6 +167,8 @@ void main()
                 + getTextureColor(tex7, n) * texCont[2][1]
                 + getTextureColor(tex8, n) * texCont[2][2];
 
+    // Kdif = colCoord.xyz;
+
     vec3 Kspec = vec3(1.0);
     vec3 Kamb = Kdif;
     vec3 I = vec3(1.0);
@@ -174,6 +177,8 @@ void main()
     vec3 C = vec3(0.0);
     C += I * max(0.0, cosTita) * Kdif;
     C += Ia * Kamb;
+
+    //C = n;
 
     gl_FragColor = vec4(C, 1.0);
 }

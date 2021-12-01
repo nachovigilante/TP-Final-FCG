@@ -32,6 +32,14 @@ float opSmoothUnion(float d1, float d2, float k) {
     return mix( d2, d1, h ) - k*h*(1.0-h);
 }
 
+Color randColor() {
+    return {
+        (float)rand() / (float)RAND_MAX,
+        (float)rand() / (float)RAND_MAX,
+        (float)rand() / (float)RAND_MAX
+    };
+}
+
 Color colorize(float xx, float yy, float zz) {
     if(yy > 140) {
         return {1, 1, 1, 1};
@@ -84,8 +92,23 @@ float texturize(int yy){
     }
 }
 
+inline int addVertex(const Vertex& v, const Vertex& n, Vertex* vertBuffer, int& numVertex, Vertex* normArray, int* indexBuffer, int& numIndex, int* firstIndex, int index, int x, int y, int z) {
+    const float EPS = 0.01;
+    for(int i = 0; i < numVertex; i++) {
+        if(abs(vertBuffer[i].x - v.x) < EPS && abs(vertBuffer[i].y - v.y) < EPS && abs(vertBuffer[i].z - v.z) < EPS) {
+            normArray[i] = normArray[i] + n;
+            firstIndex[i]++;
+            return i;
+        }
+    }
+    normArray[numVertex] = n;
+    firstIndex[numVertex] = 1;
+    vertBuffer[numVertex++] = v;
+    return numVertex - 1;
+}
+
 extern "C" {
-    int generate_mesh(Vertex* vertArray, Vertex* normArray, Color* colorArray, float* textureArray, const int CHUNK_X, const int CHUNK_Y, const int CHUNK_Z, const int SIZE, const float isolevel, const int seed, const float multiplier, const int num_noises, const float* params) {
+    void generate_mesh(int& numIndex, int& numVertex, int* indexBuffer, Vertex* vertArray, Vertex* normArray, Color* colorArray, float* textureArray, const int CHUNK_X, const int CHUNK_Y, const int CHUNK_Z, const int SIZE, const float isolevel, const int seed, const float multiplier, const int num_noises, const float* params) {
         vector<FastNoiseLite> noises(num_noises);
 
         for(int i = 0; i < num_noises; i++) {
@@ -150,27 +173,17 @@ extern "C" {
             }
         }
 
-        // 2. Generar el terreno
-        //for (int x = 0; x < SIZE1; x++) {
-        //    for (int y = SIZE1 * 0.6; y < SIZE1; y++) {
-        //        for (int z = 0; z < SIZE1; z++) {
-        //            float xx = CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE;
-        //            float yy = CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE;
-        //            float zz = CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE;
-        //
-        //            //float val = (perlinNoise.GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
-        //            float val = (perlinNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
-        //            float val2 = (cellularNoise.GetNoise(xx, zz) + 1.0f) / 2.0f;
-        //            
-        //            points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = y - val * SIZE * 0.3 - val2 * SIZE * 0.2 - SIZE * 0.6;
-        //        }
-        //    }
-        //}
-
-        int numVertex = 0;
+        numIndex = 0;
+        numVertex = 0;
         float val[8];
         Vertex p[8];
         Vertex vertexList[12];
+
+        // Este indice apunta al primer indice en el indexBuffer
+        // que corresponde al í-esimo cubo
+        int* firstIndex = (int*)malloc(80000000 * sizeof(int));
+        for(int i = 0; i < CELLS; i++)
+            firstIndex[i] = 0;
 
         // 4. Marching Cubes
         for (int x = 0; x < SIZE; x++) {
@@ -188,6 +201,7 @@ extern "C" {
                     p[6] = { xx + 1, yy + 1, zz + 1 };
                     p[7] = { xx , yy + 1, zz + 1 };
 
+                    int idx = x * SIZE1 * SIZE1 + y * SIZE1 + z;
                     int cubeIndex = 0;
                     val[0] = points[(x + 0) * SIZE1 * SIZE1 + (y + 0) * SIZE1 + (z + 0)];
                     val[1] = points[(x + 1) * SIZE1 * SIZE1 + (y + 0) * SIZE1 + (z + 0)];
@@ -240,13 +254,20 @@ extern "C" {
                     if (edge & 2048)
                         vertexList[11] = vertexInterp(isolevel, p[3], p[7], val[3], val[7]);
 
+                    // firstIndex[idx] = numVertex;
+
                     // Genero los triangulos
                     for (int i = 0; triTable[cubeIndex][i] != -1; i += 3) {
                         const Vertex& a = vertexList[triTable[cubeIndex][i]];
                         const Vertex& b = vertexList[triTable[cubeIndex][i + 1]];
                         const Vertex& c = vertexList[triTable[cubeIndex][i + 2]];
-                        const Vertex normal = normalize(crossProduct(c - a, b - a));
+                        const Vertex normal = crossProduct(c - a, b - a);
                         
+                        indexBuffer[numIndex++] = addVertex(a, normal, vertArray, numVertex, normArray, indexBuffer, numIndex, firstIndex, idx, x, y, z);
+                        indexBuffer[numIndex++] = addVertex(b, normal, vertArray, numVertex, normArray, indexBuffer, numIndex, firstIndex, idx, x, y, z);
+                        indexBuffer[numIndex++] = addVertex(c, normal, vertArray, numVertex, normArray, indexBuffer, numIndex, firstIndex, idx, x, y, z);
+
+                        /*
                         const Color color = colorize(
                             CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE,
                             CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE,
@@ -258,19 +279,20 @@ extern "C" {
                         );
 
                         normArray[numVertex] = normal;
-                        colorArray[numVertex] = color;
+                        colorArray[numVertex] = randColor();
                         textureArray[numVertex] = texture;
                         vertArray[numVertex++] = a;
 
                         normArray[numVertex] = normal;
-                        colorArray[numVertex] = color;
-                        textureArray[numVertex] = texture;
+                        colorArray[numVertex] = randColor();
+                        textureArray[numVertex] = texture+1;
                         vertArray[numVertex++] = b;
 
                         normArray[numVertex] = normal;
-                        colorArray[numVertex] = color;
-                        textureArray[numVertex] = texture;
+                        colorArray[numVertex] = randColor();
+                        textureArray[numVertex] = texture+2;
                         vertArray[numVertex++] = c;
+                        */
                     }
                 }
             }
@@ -279,12 +301,16 @@ extern "C" {
         const float scale = 2.0f / (float)SIZE;
         const Vertex offset = { 1.0f, 1.0f, 1.0f };
         for (int i = 0; i < numVertex; i++) {
+            textureArray[i] = texturize(
+                CHUNK_Y * FIXED_BOX_SIZE + int(vertArray[i].y) * FIXED_BOX_SIZE / SIZE
+            );
             vertArray[i] = vertArray[i] * scale - offset;
+            colorArray[i] = {1,1,1};
+            normArray[i] = normalize(normArray[i] * (1.0f / (float)firstIndex[i]));
         }
 
+        free(firstIndex);
         free(points);
-
-        return numVertex;
     }
 }
 

@@ -1,7 +1,11 @@
 class Mesh {
-    constructor(vertPos, normPos, colorPos, texPos, gl) {
+    constructor(indexBuffer, vertPos, normPos, colorPos, texPos, gl) {
         this.gl = gl;
-        this.numTris = vertPos.length / 3;
+        this.numIdxs = indexBuffer.length;
+
+        this.index_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.index_buffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexBuffer, gl.STATIC_DRAW);
 
         this.vertex_buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertex_buffer);
@@ -21,6 +25,7 @@ class Mesh {
     }
 
     destroy() {
+        this.gl.deleteBuffer(this.index_buffer);
         this.gl.deleteBuffer(this.vertex_buffer);
         this.gl.deleteBuffer(this.normal_buffer);
         this.gl.deleteBuffer(this.color_buffer);
@@ -56,9 +61,13 @@ class Mesh {
         gl.vertexAttribPointer(this.location_tex, 1, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(this.location_tex);
 
-        gl.drawArrays(gl.TRIANGLES, 0, this.numTris);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.index_buffer);
+
+        gl.drawElements(gl.TRIANGLES, this.numIdxs, gl.UNSIGNED_INT, 0);
 
         gl.disableVertexAttribArray(this.location_pos);
         gl.disableVertexAttribArray(this.location_normal);
+        gl.disableVertexAttribArray(this.color_buffer);
+        gl.disableVertexAttribArray(this.texture_buffer);
     }
 }
