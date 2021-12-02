@@ -38,8 +38,12 @@ function addNoise(gui, object) {
     gui.add(object, "frequency", 0, 0.05).onChange(invalidateAllChunks);
     gui.add(object, "octaves", 0, 10).step(1).onChange(invalidateAllChunks);
     gui.add(object, "lacunarity", 0, 10).onChange(invalidateAllChunks);
-    gui.add(object, "gain", 0, 1).onChange(invalidateAllChunks);
+    gui.add(object, "gain", 0, 1).step(0.1).onChange(invalidateAllChunks);
     gui.add(object, "contribution", 0, 1).onChange(invalidateAllChunks);
+    gui.add(object, "mode", {
+        "2D": 0,
+        "3D": 1
+    }).onChange(invalidateAllChunks);
 
     terrain_params.noises.push(object);
 }
@@ -58,6 +62,7 @@ addNoise(gui.addFolder("Cuevas"), {
     lacunarity: 2.8,
     gain: 0.35,
     contribution: 0,
+    mode: 0
 });
 
 addNoise(gui.addFolder("Base"), {
@@ -68,6 +73,7 @@ addNoise(gui.addFolder("Base"), {
     lacunarity: 1.5,
     gain: 0.42,
     contribution: 0.5,
+    mode: 0
 });
 
 addNoise(gui.addFolder("Rugosidad"), {
@@ -78,6 +84,7 @@ addNoise(gui.addFolder("Rugosidad"), {
     lacunarity: 1.5,
     gain: 0.51,
     contribution: 0.37,
+    mode: 0
 });
 
 addNoise(gui.addFolder("Picos"), {
@@ -88,6 +95,18 @@ addNoise(gui.addFolder("Picos"), {
     lacunarity: 0,
     gain: 0,
     contribution: 0.3,
+    mode: 0
+});
+
+addNoise(gui.addFolder("3D test"), {
+    noiseType: 2,
+    fractalType: 0,
+    frequency: 0.012,
+    octaves: 0,
+    lacunarity: 0,
+    gain: 0,
+    contribution: 0.3,
+    mode: 1
 });
 
 

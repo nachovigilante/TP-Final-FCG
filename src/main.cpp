@@ -113,7 +113,7 @@ extern "C" {
 
         for(int i = 0; i < num_noises; i++) {
             FastNoiseLite& noise = noises[i];
-            const float* params_offset = params + i * 7;
+            const float* params_offset = params + i * 8;
 
             noise.SetSeed(seed);
             noise.SetNoiseType(static_cast<FastNoiseLite::NoiseType>((int)params_offset[0]));
@@ -156,17 +156,22 @@ extern "C" {
                     //float val = perlinNoise.GetNoise(xx, zz) * 100.0f - yy;
 
                     float coeff = 0;
+                    float val = 0;
                     for(int i = 1; i < num_noises; i++) {
                         FastNoiseLite& noise = noises[i];
-                        const float* params_offset = params + i * 7;
-                        coeff += noise.GetNoise(xx, zz) * params_offset[6];
+                        const float* params_offset = params + i * 8;
+                        if(params_offset[7] == 0) {
+                            coeff += noise.GetNoise(xx, zz) * params_offset[6];
+                        } else {
+                            val += noise.GetNoise(xx, yy, zz) * params_offset[6];
+                        }
                     }
                     float a = clamp(coeff - yy / multiplier, 0, 1);
 
                     // cave noise
                     float caveNoise = (noises[0].GetNoise(xx, yy, zz) + 1.0f) / 2.0f;
 
-                    float val = opSmoothUnion(a, caveNoise, 0.75);
+                    val += opSmoothUnion(a, caveNoise, 0.75);
 
                     points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = val;
                 }
