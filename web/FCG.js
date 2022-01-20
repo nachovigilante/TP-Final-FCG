@@ -98,6 +98,7 @@ addNoise(gui.addFolder("Picos"), {
     mode: 0
 });
 
+/*
 addNoise(gui.addFolder("3D test"), {
     noiseType: 2,
     fractalType: 0,
@@ -108,6 +109,7 @@ addNoise(gui.addFolder("3D test"), {
     contribution: 0.3,
     mode: 1
 });
+*/
 
 
 const renderer = new Renderer(canvas, gl);
