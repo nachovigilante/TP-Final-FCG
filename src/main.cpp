@@ -93,16 +93,14 @@ float texturize(int yy){
 }
 
 inline int addVertex(const Vertex& v, const Vertex& n, Vertex* vertBuffer, int& numVertex, Vertex* normArray, int* indexBuffer, int& numIndex, int* firstIndex, int index, int x, int y, int z) {
-    const float EPS = 0.01;
+    const float EPS = 0.4;
+    normArray[numVertex] = n;
     for(int i = 0; i < numVertex; i++) {
         if(abs(vertBuffer[i].x - v.x) < EPS && abs(vertBuffer[i].y - v.y) < EPS && abs(vertBuffer[i].z - v.z) < EPS) {
+            normArray[numVertex] = n + normArray[i];
             normArray[i] = normArray[i] + n;
-            firstIndex[i]++;
-            return i;
         }
     }
-    normArray[numVertex] = n;
-    firstIndex[numVertex] = 1;
     vertBuffer[numVertex++] = v;
     return numVertex - 1;
 }
@@ -311,7 +309,7 @@ extern "C" {
             );
             vertArray[i] = vertArray[i] * scale - offset;
             colorArray[i] = {1,1,1};
-            normArray[i] = normalize(normArray[i] * (1.0f / (float)firstIndex[i]));
+            normArray[i] = normalize(normArray[i]);
         }
 
         free(firstIndex);

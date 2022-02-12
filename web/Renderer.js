@@ -35,7 +35,7 @@ class Renderer {
         this.tex_id = [];
         for(let i = 0; i < 9; i++) {
             let img = new Image();
-            img.src = `./texture/terrain_${i}.jpg`;
+            img.src = `./texture/terrain_${i}.png`;
             img.onload = () => {
                 console.log(img);
 
@@ -178,7 +178,7 @@ void main()
     C += I * max(0.0, cosTita) * Kdif;
     C += Ia * Kamb;
 
-    //C = n;
+    //C = (normCoord + vec3(1.0)) / 2.0;
 
     gl_FragColor = vec4(C, 1.0);
 }
