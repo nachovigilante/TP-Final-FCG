@@ -286,7 +286,7 @@ extern "C" {
         const Vertex offset = { 1.0f, 1.0f, 1.0f };
         for (int i = 0; i < numVertex; i++) {
             textureArray[i] = texturize(
-                CHUNK_Y * FIXED_BOX_SIZE + int(vertArray[i].y) * FIXED_BOX_SIZE / SIZE
+                CHUNK_Y * FIXED_BOX_SIZE + vertArray[i].y * FIXED_BOX_SIZE / SIZE
             );
             vertArray[i] = vertArray[i] * scale - offset;
             colorArray[i] = {1,1,1};
