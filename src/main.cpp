@@ -92,7 +92,7 @@ float texturize(int yy){
     }
 }
 
-inline int addVertex(const Vertex& v, const Vertex& n, Vertex* vertBuffer, int& numVertex, Vertex* normArray, int* indexBuffer, int& numIndex, int* firstIndex, int index, int x, int y, int z) {
+inline int addVertex(const Vertex& v, const Vertex& n, Vertex* vertBuffer, int& numVertex, Vertex* normArray, int* indexBuffer, int& numIndex, int* firstIndex, int index, int x, int y, int z, int SIZE) {
     const float EPS = 0.4;
     normArray[numVertex] = n;
     for(int i = 0; i < numVertex; i++) {
@@ -101,6 +101,10 @@ inline int addVertex(const Vertex& v, const Vertex& n, Vertex* vertBuffer, int& 
             normArray[i] = normArray[i] + n;
         }
     }
+    if(x < 1 || y < 1 || z < 1 || x > SIZE+0 || y > SIZE+0 || z > SIZE+0) {
+        return -1;
+    }
+
     vertBuffer[numVertex++] = v;
     return numVertex - 1;
 }
@@ -124,14 +128,14 @@ extern "C" {
 
         const float FIXED_BOX_SIZE = 100;
         const float OFFSET_Y_WORLD = FIXED_BOX_SIZE * 2;
-        const int SIZE1 = SIZE + 1;
-        const int CELLS = SIZE1 * SIZE1 * SIZE1;
+        const int SIZE3 = SIZE + 3;
+        const int CELLS = SIZE3 * SIZE3 * SIZE3;
         float* points = (float*)malloc(CELLS * sizeof(float));
 
         // 1. Generar las cuevas
-        for (int x = 0; x < SIZE1; x++) {
-            for (int y = 0; y < SIZE1; y++) {
-                for (int z = 0; z < SIZE1; z++) {
+        for (int x = 0; x < SIZE3; x++) {
+            for (int y = 0; y < SIZE3; y++) {
+                for (int z = 0; z < SIZE3; z++) {
                     float xx = CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE;
                     float yy = CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE;
                     float zz = CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE;
@@ -171,7 +175,7 @@ extern "C" {
 
                     val += opSmoothUnion(a, caveNoise, 0.75);
 
-                    points[x * SIZE1 * SIZE1 + y * SIZE1 + z] = val;
+                    points[x * SIZE3 * SIZE3 + y * SIZE3 + z] = val;
                 }
             }
         }
@@ -189,12 +193,12 @@ extern "C" {
             firstIndex[i] = 0;
 
         // 4. Marching Cubes
-        for (int x = 0; x < SIZE; x++) {
-            for (int y = 0; y < SIZE; y++) {
-                for (int z = 0; z < SIZE; z++) {
-                    float xx = x;
-                    float yy = y;
-                    float zz = z;
+        for (int x = 0; x < SIZE3 - 1; x++) {
+            for (int y = 0; y < SIZE3 - 1; y++) {
+                for (int z = 0; z < SIZE3 - 1; z++) {
+                    float xx = x - 1;
+                    float yy = y - 1;
+                    float zz = z - 1;
                     p[0] = { xx, yy, zz };
                     p[1] = { xx + 1, yy, zz };
                     p[2] = { xx + 1,yy,zz + 1 };
@@ -204,16 +208,16 @@ extern "C" {
                     p[6] = { xx + 1, yy + 1, zz + 1 };
                     p[7] = { xx , yy + 1, zz + 1 };
 
-                    int idx = x * SIZE1 * SIZE1 + y * SIZE1 + z;
+                    int idx = x * SIZE3 * SIZE3 + y * SIZE3 + z;
                     int cubeIndex = 0;
-                    val[0] = points[(x + 0) * SIZE1 * SIZE1 + (y + 0) * SIZE1 + (z + 0)];
-                    val[1] = points[(x + 1) * SIZE1 * SIZE1 + (y + 0) * SIZE1 + (z + 0)];
-                    val[2] = points[(x + 1) * SIZE1 * SIZE1 + (y + 0) * SIZE1 + (z + 1)];
-                    val[3] = points[(x + 0) * SIZE1 * SIZE1 + (y + 0) * SIZE1 + (z + 1)];
-                    val[4] = points[(x + 0) * SIZE1 * SIZE1 + (y + 1) * SIZE1 + (z + 0)];
-                    val[5] = points[(x + 1) * SIZE1 * SIZE1 + (y + 1) * SIZE1 + (z + 0)];
-                    val[6] = points[(x + 1) * SIZE1 * SIZE1 + (y + 1) * SIZE1 + (z + 1)];
-                    val[7] = points[(x + 0) * SIZE1 * SIZE1 + (y + 1) * SIZE1 + (z + 1)];
+                    val[0] = points[(x + 0) * SIZE3 * SIZE3 + (y + 0) * SIZE3 + (z + 0)];
+                    val[1] = points[(x + 1) * SIZE3 * SIZE3 + (y + 0) * SIZE3 + (z + 0)];
+                    val[2] = points[(x + 1) * SIZE3 * SIZE3 + (y + 0) * SIZE3 + (z + 1)];
+                    val[3] = points[(x + 0) * SIZE3 * SIZE3 + (y + 0) * SIZE3 + (z + 1)];
+                    val[4] = points[(x + 0) * SIZE3 * SIZE3 + (y + 1) * SIZE3 + (z + 0)];
+                    val[5] = points[(x + 1) * SIZE3 * SIZE3 + (y + 1) * SIZE3 + (z + 0)];
+                    val[6] = points[(x + 1) * SIZE3 * SIZE3 + (y + 1) * SIZE3 + (z + 1)];
+                    val[7] = points[(x + 0) * SIZE3 * SIZE3 + (y + 1) * SIZE3 + (z + 1)];
 
                     // Busco qué vertices están dentro del cubo
                     // y determino el índice en edgeTable
@@ -257,45 +261,22 @@ extern "C" {
                     if (edge & 2048)
                         vertexList[11] = vertexInterp(isolevel, p[3], p[7], val[3], val[7]);
 
-                    // firstIndex[idx] = numVertex;
-
                     // Genero los triangulos
                     for (int i = 0; triTable[cubeIndex][i] != -1; i += 3) {
                         const Vertex& a = vertexList[triTable[cubeIndex][i]];
                         const Vertex& b = vertexList[triTable[cubeIndex][i + 1]];
                         const Vertex& c = vertexList[triTable[cubeIndex][i + 2]];
                         const Vertex normal = crossProduct(c - a, b - a);
-                        
-                        indexBuffer[numIndex++] = addVertex(a, normal, vertArray, numVertex, normArray, indexBuffer, numIndex, firstIndex, idx, x, y, z);
-                        indexBuffer[numIndex++] = addVertex(b, normal, vertArray, numVertex, normArray, indexBuffer, numIndex, firstIndex, idx, x, y, z);
-                        indexBuffer[numIndex++] = addVertex(c, normal, vertArray, numVertex, normArray, indexBuffer, numIndex, firstIndex, idx, x, y, z);
 
-                        /*
-                        const Color color = colorize(
-                            CHUNK_X * FIXED_BOX_SIZE + x * FIXED_BOX_SIZE / SIZE,
-                            CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE,
-                            CHUNK_Z * FIXED_BOX_SIZE + z * FIXED_BOX_SIZE / SIZE
-                        );
+                        int ia = addVertex(a, normal, vertArray, numVertex, normArray, indexBuffer, numIndex, firstIndex, idx, x, y, z, SIZE);
+                        int ib = addVertex(b, normal, vertArray, numVertex, normArray, indexBuffer, numIndex, firstIndex, idx, x, y, z, SIZE);
+                        int ic = addVertex(c, normal, vertArray, numVertex, normArray, indexBuffer, numIndex, firstIndex, idx, x, y, z, SIZE);
 
-                        const float texture = texturize(
-                            CHUNK_Y * FIXED_BOX_SIZE + y * FIXED_BOX_SIZE / SIZE
-                        );
-
-                        normArray[numVertex] = normal;
-                        colorArray[numVertex] = randColor();
-                        textureArray[numVertex] = texture;
-                        vertArray[numVertex++] = a;
-
-                        normArray[numVertex] = normal;
-                        colorArray[numVertex] = randColor();
-                        textureArray[numVertex] = texture+1;
-                        vertArray[numVertex++] = b;
-
-                        normArray[numVertex] = normal;
-                        colorArray[numVertex] = randColor();
-                        textureArray[numVertex] = texture+2;
-                        vertArray[numVertex++] = c;
-                        */
+                        if(ia >= 0 && ib >= 0 && ic >= 0) {
+                            indexBuffer[numIndex++] = ia;
+                            indexBuffer[numIndex++] = ib;
+                            indexBuffer[numIndex++] = ic;
+                        }
                     }
                 }
             }
